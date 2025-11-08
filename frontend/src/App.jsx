@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import PageLoader from "./components/PageLoader";
 import IncomingCallModal from "./components/IncomingCallModal";
 import VideoCallModal from "./components/VideoCallModal";
+import InstallPWA from "./components/InstallPWA";
 
 import { Toaster } from "react-hot-toast";
 
@@ -106,6 +107,9 @@ function App() {
       )}
 
       <Toaster />
+      
+      {/* PWA Install Prompt */}
+      <InstallPWA />
     </div>
   );
 }

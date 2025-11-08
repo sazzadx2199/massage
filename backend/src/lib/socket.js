@@ -49,6 +49,39 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Video/Audio Call Events
+  socket.on("callUser", ({ receiverId, callType, roomId, caller }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("incomingCall", {
+        caller,
+        callType,
+        roomId,
+      });
+    }
+  });
+
+  socket.on("callAccepted", ({ callerId, roomId }) => {
+    const callerSocketId = getReceiverSocketId(callerId);
+    if (callerSocketId) {
+      io.to(callerSocketId).emit("callAccepted", { roomId });
+    }
+  });
+
+  socket.on("callRejected", ({ callerId }) => {
+    const callerSocketId = getReceiverSocketId(callerId);
+    if (callerSocketId) {
+      io.to(callerSocketId).emit("callRejected");
+    }
+  });
+
+  socket.on("endCall", ({ receiverId }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("callEnded");
+    }
+  });
+
   // with socket.on we listen for events from clients
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.user.fullName);

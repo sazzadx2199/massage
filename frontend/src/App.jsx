@@ -8,17 +8,44 @@ import NotificationsSettings from "./pages/settings/NotificationsSettings";
 import PrivacySettings from "./pages/settings/PrivacySettings";
 import ChatSettings from "./pages/settings/ChatSettings";
 import { useAuthStore } from "./store/useAuthStore";
+import { useCallStore } from "./store/useCallStore";
 import { useEffect } from "react";
 import PageLoader from "./components/PageLoader";
+import IncomingCallModal from "./components/IncomingCallModal";
+import VideoCallModal from "./components/VideoCallModal";
 
 import { Toaster } from "react-hot-toast";
 
 function App() {
-  const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
+  const { checkAuth, isCheckingAuth, authUser, socket } = useAuthStore();
+  const { incomingCall, activeCall, isCallModalOpen, setIncomingCall, acceptCall, rejectCall, endCall } = useCallStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Listen for incoming calls
+  useEffect(() => {
+    if (!socket || !authUser) return;
+
+    socket.on("incomingCall", (callData) => {
+      setIncomingCall(callData);
+    });
+
+    socket.on("callRejected", () => {
+      endCall();
+    });
+
+    socket.on("callEnded", () => {
+      endCall();
+    });
+
+    return () => {
+      socket.off("incomingCall");
+      socket.off("callRejected");
+      socket.off("callEnded");
+    };
+  }, [socket, authUser, setIncomingCall, endCall]);
 
   if (isCheckingAuth) return <PageLoader />;
 
@@ -39,6 +66,43 @@ function App() {
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
         <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to={"/"} />} />
       </Routes>
+
+      {/* Incoming Call Modal */}
+      {incomingCall && (
+        <IncomingCallModal
+          caller={incomingCall.caller}
+          callType={incomingCall.callType}
+          onAccept={() => {
+            acceptCall();
+            socket.emit("callAccepted", {
+              callerId: incomingCall.caller._id,
+              roomId: incomingCall.roomId,
+            });
+          }}
+          onReject={() => {
+            rejectCall();
+            socket.emit("callRejected", {
+              callerId: incomingCall.caller._id,
+            });
+          }}
+        />
+      )}
+
+      {/* Active Call Modal */}
+      {activeCall && isCallModalOpen && (
+        <VideoCallModal
+          isOpen={isCallModalOpen}
+          onClose={() => {
+            endCall();
+            socket.emit("endCall", {
+              receiverId: activeCall.user._id,
+            });
+          }}
+          roomId={activeCall.roomId}
+          userName={authUser.fullName}
+          userId={authUser._id}
+        />
+      )}
 
       <Toaster />
     </div>

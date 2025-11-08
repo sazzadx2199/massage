@@ -6,11 +6,46 @@ import VideoCallModal from "./VideoCallModal";
 
 function ChatHeader({ onSearchClick }) {
   const { selectedUser, setSelectedUser } = useChatStore();
-  const { onlineUsers, authUser } = useAuthStore();
+  const { onlineUsers, authUser, socket } = useAuthStore();
   const isOnline = onlineUsers.includes(selectedUser._id);
   const [showVideoCall, setShowVideoCall] = useState(false);
+  const [callType, setCallType] = useState("video");
 
   const handleVideoCall = () => {
+    const roomId = `${authUser._id}-${selectedUser._id}`;
+    
+    // Send call notification via socket
+    socket.emit("callUser", {
+      receiverId: selectedUser._id,
+      callType: "video",
+      roomId,
+      caller: {
+        _id: authUser._id,
+        fullName: authUser.fullName,
+        profilePic: authUser.profilePic,
+      },
+    });
+
+    setCallType("video");
+    setShowVideoCall(true);
+  };
+
+  const handleAudioCall = () => {
+    const roomId = `${authUser._id}-${selectedUser._id}`;
+    
+    // Send call notification via socket
+    socket.emit("callUser", {
+      receiverId: selectedUser._id,
+      callType: "audio",
+      roomId,
+      caller: {
+        _id: authUser._id,
+        fullName: authUser.fullName,
+        profilePic: authUser.profilePic,
+      },
+    });
+
+    setCallType("audio");
     setShowVideoCall(true);
   };
 
@@ -56,7 +91,7 @@ function ChatHeader({ onSearchClick }) {
 
         {/* Audio Call Button */}
         <button 
-          onClick={handleVideoCall}
+          onClick={handleAudioCall}
           className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
           aria-label="Audio call"
           title="Audio call"

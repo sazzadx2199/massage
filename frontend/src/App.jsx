@@ -36,20 +36,17 @@ function App() {
 
     socket.on("callRejected", () => {
       console.log("Call rejected by other user");
-      endCall();
-    });
-
-    socket.on("callEnded", () => {
-      console.log("Call ended by other user");
-      endCall();
+      // If on call page, navigate back
+      if (window.location.pathname === "/video-call") {
+        window.location.href = "/";
+      }
     });
 
     return () => {
       socket.off("incomingCall");
       socket.off("callRejected");
-      socket.off("callEnded");
     };
-  }, [socket, authUser, setIncomingCall, endCall]);
+  }, [socket, authUser, setIncomingCall]);
 
   if (isCheckingAuth) return <PageLoader />;
 

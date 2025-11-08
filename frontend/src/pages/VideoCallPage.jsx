@@ -17,6 +17,22 @@ function VideoCallPage() {
   const callType = searchParams.get("type") || "video";
   const receiverId = searchParams.get("receiverId");
 
+  // Listen for call end from other user
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCallEnded = () => {
+      console.log("Call ended by other user - navigating home");
+      navigate("/");
+    };
+
+    socket.on("callEnded", handleCallEnded);
+
+    return () => {
+      socket.off("callEnded", handleCallEnded);
+    };
+  }, [socket, navigate]);
+
   useEffect(() => {
     if (!authUser || !roomId) {
       navigate("/");
@@ -136,6 +152,32 @@ function VideoCallPage() {
   }, [authUser, roomId, callType, navigate]);
 
   const handleLeaveCall = () => {
+    console.log("Leaving call - notifying other user");
+    
+    // Stop all media tracks first
+    if (containerRef.current) {
+      const videos = containerRef.current.querySelectorAll('video');
+      videos.forEach(video => {
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(track => {
+            track.stop();
+            console.log("Stopped track:", track.kind);
+          });
+          video.srcObject = null;
+        }
+      });
+    }
+
+    // Destroy ZegoCloud instance
+    if (zpRef.current) {
+      try {
+        zpRef.current.destroy();
+        zpRef.current = null;
+      } catch (error) {
+        console.error("Error destroying call:", error);
+      }
+    }
+
     // Notify other user
     if (socket && receiverId) {
       socket.emit("endCall", { receiverId });

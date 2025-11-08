@@ -3,9 +3,10 @@ import useKeyboardSound from "../hooks/useKeyboardSound";
 import { useChatStore } from "../store/useChatStore";
 import { useSettingsStore } from "../store/useSettingsStore";
 import toast from "react-hot-toast";
-import { ImageIcon, SendIcon, XIcon } from "lucide-react";
+import { Image, Send, X } from "lucide-react";
+import ReplyPreview from "./ReplyPreview";
 
-function MessageInput() {
+function MessageInput({ replyingTo, onCancelReply }) {
   const { playRandomKeyStrokeSound } = useKeyboardSound();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
@@ -54,7 +55,16 @@ function MessageInput() {
   };
 
   return (
-    <div className="p-3 md:p-4 border-t border-slate-700/50 bg-slate-800/30">
+    <div className="border-t border-slate-700/50 bg-slate-800/30">
+      {/* Reply Preview */}
+      {replyingTo && (
+        <ReplyPreview 
+          message={replyingTo} 
+          onCancel={onCancelReply}
+        />
+      )}
+
+      <div className="p-3 md:p-4">
       {imagePreview && (
         <div className="max-w-4xl mx-auto mb-3 flex items-center">
           <div className="relative">
@@ -68,7 +78,7 @@ function MessageInput() {
               className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-200 hover:bg-slate-700"
               type="button"
             >
-              <XIcon className="w-4 h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -107,7 +117,7 @@ function MessageInput() {
           }`}
           aria-label="Attach image"
         >
-          <ImageIcon className="w-5 h-5" />
+          <Image className="w-5 h-5" />
         </button>
         <button
           type="submit"
@@ -115,9 +125,10 @@ function MessageInput() {
           className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg px-4 md:px-6 py-2.5 md:py-3 font-medium hover:from-cyan-600 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
           aria-label="Send message"
         >
-          <SendIcon className="w-5 h-5" />
+          <Send className="w-5 h-5" />
         </button>
       </form>
+      </div>
     </div>
   );
 }

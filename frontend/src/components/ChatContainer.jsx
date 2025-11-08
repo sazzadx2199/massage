@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import ChatHeader from "./ChatHeader";
@@ -6,6 +6,10 @@ import NoChatHistoryPlaceholder from "./NoChatHistoryPlaceholder";
 import MessageInput from "./MessageInput";
 import MessagesLoadingSkeleton from "./MessagesLoadingSkeleton";
 import TypingIndicator from "./TypingIndicator";
+import MessageContextMenu from "./MessageContextMenu";
+import EditMessageModal from "./EditMessageModal";
+import DeleteMessageModal from "./DeleteMessageModal";
+import toast from "react-hot-toast";
 
 function ChatContainer() {
   const {
@@ -15,11 +19,19 @@ function ChatContainer() {
     isMessagesLoading,
     subscribeToMessages,
     unsubscribeFromMessages,
-    isTyping,
     typingUsers,
+    deleteMessage,
+    editMessage,
+    addReaction,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [deletingMessage, setDeletingMessage] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   useEffect(() => {
     getMessagesByUserId(selectedUser._id);
@@ -34,6 +46,53 @@ function ChatContainer() {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // Message action handlers
+  const handleContextMenu = (e, message) => {
+    e.preventDefault();
+    setContextMenu({
+      message,
+      position: { x: e.clientX, y: e.clientY }
+    });
+  };
+
+  const handleReply = () => {
+    setReplyingTo(contextMenu.message);
+  };
+
+  const handleEdit = () => {
+    setEditingMessage(contextMenu.message);
+  };
+
+  const handleDelete = () => {
+    setDeletingMessage(contextMenu.message);
+  };
+
+  const handleCopy = () => {
+    if (contextMenu.message.text) {
+      navigator.clipboard.writeText(contextMenu.message.text);
+      toast.success("Message copied!");
+    }
+  };
+
+  const handleReact = async (emoji) => {
+    await addReaction(contextMenu.message._id, emoji);
+  };
+
+  const handleSaveEdit = async (newText) => {
+    await editMessage(editingMessage._id, newText);
+    setEditingMessage(null);
+  };
+
+  const handleDeleteForMe = async () => {
+    await deleteMessage(deletingMessage._id, false);
+    setDeletingMessage(null);
+  };
+
+  const handleDeleteForEveryone = async () => {
+    await deleteMessage(deletingMessage._id, true);
+    setDeletingMessage(null);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -66,7 +125,8 @@ function ChatContainer() {
 
                   {/* Message bubble */}
                   <div
-                    className={`relative max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 shadow-sm ${
+                    onContextMenu={(e) => handleContextMenu(e, msg)}
+                    className={`relative max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
                       isOwnMessage
                         ? "bg-cyan-600 text-white rounded-2xl rounded-br-md"
                         : "bg-slate-800 text-slate-200 rounded-2xl rounded-bl-md"
@@ -85,8 +145,11 @@ function ChatContainer() {
                       </p>
                     )}
                     
-                    {/* Time and status */}
+                    {/* Time, edited status, and read status */}
                     <div className={`flex items-center gap-1 mt-1 text-xs ${isOwnMessage ? "justify-end" : ""}`}>
+                      {msg.isEdited && (
+                        <span className="opacity-70 italic">edited</span>
+                      )}
                       <span className="opacity-70">
                         {new Date(msg.createdAt).toLocaleTimeString(undefined, {
                           hour: "2-digit",
@@ -99,6 +162,20 @@ function ChatContainer() {
                         </span>
                       )}
                     </div>
+
+                    {/* Reactions */}
+                    {msg.reactions && msg.reactions.length > 0 && (
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {msg.reactions.map((reaction, idx) => (
+                          <span 
+                            key={idx}
+                            className="text-sm bg-slate-700/50 px-2 py-0.5 rounded-full"
+                          >
+                            {reaction.emoji}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -116,7 +193,41 @@ function ChatContainer() {
         {typingUsers.has(selectedUser?._id) && <TypingIndicator />}
       </div>
 
-      <MessageInput />
+      <MessageInput replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} />
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <MessageContextMenu
+          message={contextMenu.message}
+          isOwnMessage={contextMenu.message.senderId === authUser._id}
+          position={contextMenu.position}
+          onClose={() => setContextMenu(null)}
+          onReply={handleReply}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCopy={handleCopy}
+          onReact={handleReact}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingMessage && (
+        <EditMessageModal
+          message={editingMessage}
+          onSave={handleSaveEdit}
+          onCancel={() => setEditingMessage(null)}
+        />
+      )}
+
+      {/* Delete Modal */}
+      {deletingMessage && (
+        <DeleteMessageModal
+          onDeleteForMe={handleDeleteForMe}
+          onDeleteForEveryone={handleDeleteForEveryone}
+          onCancel={() => setDeletingMessage(null)}
+          canDeleteForEveryone={deletingMessage.senderId === authUser._id}
+        />
+      )}
     </div>
   );
 }

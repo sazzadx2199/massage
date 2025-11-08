@@ -1,19 +1,16 @@
 import { XIcon, Search, Video, Phone } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import VideoCallModal from "./VideoCallModal";
+import { useNavigate } from "react-router-dom";
 
 function ChatHeader({ onSearchClick }) {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { onlineUsers, authUser, socket } = useAuthStore();
+  const navigate = useNavigate();
   const isOnline = onlineUsers.includes(selectedUser._id);
-  const [showVideoCall, setShowVideoCall] = useState(false);
-  const [callType, setCallType] = useState("video");
 
   const handleVideoCall = () => {
-    if (showVideoCall) return; // Prevent multiple calls
-    
     const roomId = `${authUser._id}-${selectedUser._id}`;
     
     // Send call notification via socket
@@ -28,13 +25,11 @@ function ChatHeader({ onSearchClick }) {
       },
     });
 
-    setCallType("video");
-    setShowVideoCall(true);
+    // Navigate to video call page
+    navigate(`/video-call?roomId=${roomId}&type=video&receiverId=${selectedUser._id}`);
   };
 
   const handleAudioCall = () => {
-    if (showVideoCall) return; // Prevent multiple calls
-    
     const roomId = `${authUser._id}-${selectedUser._id}`;
     
     // Send call notification via socket
@@ -49,17 +44,8 @@ function ChatHeader({ onSearchClick }) {
       },
     });
 
-    setCallType("audio");
-    setShowVideoCall(true);
-  };
-
-  const handleEndCall = () => {
-    console.log("Ending call from ChatHeader");
-    setShowVideoCall(false);
-    // Notify other user that call ended
-    socket.emit("endCall", {
-      receiverId: selectedUser._id,
-    });
+    // Navigate to video call page
+    navigate(`/video-call?roomId=${roomId}&type=audio&receiverId=${selectedUser._id}`);
   };
 
   useEffect(() => {
@@ -133,17 +119,6 @@ function ChatHeader({ onSearchClick }) {
         </button>
       </div>
 
-      {/* Video Call Modal */}
-      {showVideoCall && (
-        <VideoCallModal
-          isOpen={showVideoCall}
-          onClose={handleEndCall}
-          roomId={`${authUser._id}-${selectedUser._id}`}
-          userName={authUser.fullName}
-          userId={authUser._id}
-          callType={callType}
-        />
-      )}
     </div>
   );
 }

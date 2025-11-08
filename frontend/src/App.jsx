@@ -3,6 +3,7 @@ import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import SettingsPage from "./pages/SettingsPage";
+import VideoCallPage from "./pages/VideoCallPage";
 import MyAccountSettings from "./pages/settings/MyAccountSettings";
 import NotificationsSettings from "./pages/settings/NotificationsSettings";
 import PrivacySettings from "./pages/settings/PrivacySettings";
@@ -12,7 +13,6 @@ import { useCallStore } from "./store/useCallStore";
 import { useEffect } from "react";
 import PageLoader from "./components/PageLoader";
 import IncomingCallModal from "./components/IncomingCallModal";
-import VideoCallModal from "./components/VideoCallModal";
 import InstallPWA from "./components/InstallPWA";
 
 import { Toaster } from "react-hot-toast";
@@ -62,6 +62,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={authUser ? <ChatPage /> : <Navigate to={"/login"} />} />
+        <Route path="/video-call" element={authUser ? <VideoCallPage /> : <Navigate to={"/login"} />} />
         <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to={"/login"} />} />
         <Route path="/settings/account" element={authUser ? <MyAccountSettings /> : <Navigate to={"/login"} />} />
         <Route path="/settings/notifications" element={authUser ? <NotificationsSettings /> : <Navigate to={"/login"} />} />
@@ -77,11 +78,15 @@ function App() {
           caller={incomingCall.caller}
           callType={incomingCall.callType}
           onAccept={() => {
-            acceptCall();
             socket.emit("callAccepted", {
               callerId: incomingCall.caller._id,
               roomId: incomingCall.roomId,
             });
+            
+            // Navigate to video call page
+            window.location.href = `/video-call?roomId=${incomingCall.roomId}&type=${incomingCall.callType}&receiverId=${incomingCall.caller._id}`;
+            
+            rejectCall(); // Clear incoming call state
           }}
           onReject={() => {
             rejectCall();
@@ -89,23 +94,6 @@ function App() {
               callerId: incomingCall.caller._id,
             });
           }}
-        />
-      )}
-
-      {/* Active Call Modal */}
-      {activeCall && isCallModalOpen && (
-        <VideoCallModal
-          isOpen={isCallModalOpen}
-          onClose={() => {
-            endCall();
-            socket.emit("endCall", {
-              receiverId: activeCall.user._id,
-            });
-          }}
-          roomId={activeCall.roomId}
-          userName={authUser.fullName}
-          userId={authUser._id}
-          callType={activeCall.callType}
         />
       )}
 

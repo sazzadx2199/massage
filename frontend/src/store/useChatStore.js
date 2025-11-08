@@ -63,6 +63,7 @@ export const useChatStore = create((set, get) => ({
     const { authUser } = useAuthStore.getState();
 
     const tempId = `temp-${Date.now()}`;
+    const isFirstMessage = messages.length === 0;
 
     const optimisticMessage = {
       _id: tempId,
@@ -86,6 +87,12 @@ export const useChatStore = create((set, get) => ({
           m._id === tempId ? res.data : m
         )
       });
+
+      // If this was the first message, refresh chat list and contacts
+      if (isFirstMessage) {
+        get().getMyChatPartners();
+        get().getAllContacts();
+      }
     } catch (error) {
       // Remove optimistic message on failure
       set({ messages: get().messages.filter(m => m._id !== tempId) });
@@ -104,7 +111,15 @@ export const useChatStore = create((set, get) => ({
       if (!isMessageSentFromSelectedUser) return;
 
       const currentMessages = get().messages;
+      const isFirstMessage = currentMessages.length === 0;
+      
       set({ messages: [...currentMessages, newMessage] });
+
+      // If this was the first message, refresh chat list
+      if (isFirstMessage) {
+        get().getMyChatPartners();
+        get().getAllContacts();
+      }
 
       if (isSoundEnabled) {
         const notificationSound = new Audio("/sounds/notification.mp3");

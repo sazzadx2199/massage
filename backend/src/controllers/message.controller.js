@@ -6,7 +6,30 @@ import User from "../models/User.js";
 export const getAllContacts = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    
+    // Get all users who have chatted with the logged-in user
+    const messagesWithUsers = await Message.find({
+      $or: [
+        { senderId: loggedInUserId },
+        { receiverId: loggedInUserId }
+      ]
+    }).distinct('senderId receiverId');
+
+    // Create a set of user IDs who have chatted
+    const chattedUserIds = new Set(
+      messagesWithUsers
+        .flat()
+        .map(id => id.toString())
+        .filter(id => id !== loggedInUserId.toString())
+    );
+
+    // Get all users except logged-in user and those who have chatted
+    const filteredUsers = await User.find({ 
+      _id: { 
+        $ne: loggedInUserId,
+        $nin: Array.from(chattedUserIds)
+      } 
+    }).select("-password");
 
     res.status(200).json(filteredUsers);
   } catch (error) {

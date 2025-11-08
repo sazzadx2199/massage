@@ -1,4 +1,4 @@
-import { XIcon, CheckIcon } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { useState } from "react";
 
 function EditMessageModal({ message, onSave, onCancel }) {
@@ -20,7 +20,7 @@ function EditMessageModal({ message, onSave, onCancel }) {
             onClick={onCancel}
             className="text-slate-400 hover:text-slate-200 transition-colors"
           >
-            <XIcon className="w-5 h-5" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -52,7 +52,7 @@ function EditMessageModal({ message, onSave, onCancel }) {
             disabled={!text.trim() || text === message.text}
             className="flex-1 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <CheckIcon className="w-4 h-4" />
+            <Check className="w-4 h-4" />
             Save
           </button>
         </div>

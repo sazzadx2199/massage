@@ -1,4 +1,4 @@
-import { TrashIcon, XIcon } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 function DeleteMessageModal({ onDeleteForMe, onDeleteForEveryone, onCancel, canDeleteForEveryone }) {
   return (
@@ -11,7 +11,7 @@ function DeleteMessageModal({ onDeleteForMe, onDeleteForEveryone, onCancel, canD
             onClick={onCancel}
             className="text-slate-400 hover:text-slate-200 transition-colors"
           >
-            <XIcon className="w-5 h-5" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 

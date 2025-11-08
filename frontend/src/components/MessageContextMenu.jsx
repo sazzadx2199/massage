@@ -1,10 +1,10 @@
 import { 
-  ReplyIcon, 
-  CopyIcon, 
-  EditIcon, 
-  TrashIcon, 
-  ForwardIcon,
-  PinIcon 
+  Reply, 
+  Copy, 
+  Edit, 
+  Trash2, 
+  Forward,
+  Pin 
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
@@ -52,12 +52,12 @@ function MessageContextMenu({
   const reactions = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
   const menuItems = [
-    { icon: ReplyIcon, label: "Reply", onClick: onReply, show: true },
-    { icon: CopyIcon, label: "Copy", onClick: onCopy, show: message.text },
-    { icon: EditIcon, label: "Edit", onClick: onEdit, show: isOwnMessage && message.text },
-    { icon: ForwardIcon, label: "Forward", onClick: () => {}, show: true, disabled: true },
-    { icon: PinIcon, label: "Pin", onClick: () => {}, show: true, disabled: true },
-    { icon: TrashIcon, label: "Delete", onClick: onDelete, show: isOwnMessage, danger: true },
+    { icon: Reply, label: "Reply", onClick: onReply, show: true },
+    { icon: Copy, label: "Copy", onClick: onCopy, show: message.text },
+    { icon: Edit, label: "Edit", onClick: onEdit, show: isOwnMessage && message.text },
+    { icon: Forward, label: "Forward", onClick: () => {}, show: true, disabled: true },
+    { icon: Pin, label: "Pin", onClick: () => {}, show: true, disabled: true },
+    { icon: Trash2, label: "Delete", onClick: onDelete, show: isOwnMessage, danger: true },
   ];
 
   return (

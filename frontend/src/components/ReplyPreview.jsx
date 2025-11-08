@@ -1,4 +1,4 @@
-import { XIcon } from "lucide-react";
+import { X } from "lucide-react";
 
 function ReplyPreview({ message, onCancel }) {
   return (
@@ -15,7 +15,7 @@ function ReplyPreview({ message, onCancel }) {
         onClick={onCancel}
         className="text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
       >
-        <XIcon className="w-4 h-4" />
+        <X className="w-4 h-4" />
       </button>
     </div>
   );

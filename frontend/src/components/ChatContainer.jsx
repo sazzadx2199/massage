@@ -10,6 +10,7 @@ import MessageContextMenu from "./MessageContextMenu";
 import EditMessageModal from "./EditMessageModal";
 import DeleteMessageModal from "./DeleteMessageModal";
 import SearchInChat from "./SearchInChat";
+import ForwardMessageModal from "./ForwardMessageModal";
 import { Pin } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -37,6 +38,7 @@ function ChatContainer() {
   const [deletingMessage, setDeletingMessage] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [forwardingMessage, setForwardingMessage] = useState(null);
 
   useEffect(() => {
     getMessagesByUserId(selectedUser._id);
@@ -104,6 +106,28 @@ function ChatContainer() {
 
   const handlePin = async () => {
     await togglePinMessage(contextMenu.message._id);
+  };
+
+  const handleForward = () => {
+    setForwardingMessage(contextMenu.message);
+  };
+
+  const handleForwardToUsers = async (userIds) => {
+    try {
+      const messageData = {
+        text: forwardingMessage.text,
+        image: forwardingMessage.image,
+      };
+
+      // Send to each selected user
+      for (const userId of userIds) {
+        await useChatStore.getState().sendMessage(messageData);
+      }
+
+      toast.success(`Message forwarded to ${userIds.length} ${userIds.length === 1 ? 'person' : 'people'}`);
+    } catch (error) {
+      toast.error("Failed to forward message");
+    }
   };
 
   const handleSearchResult = (message) => {
@@ -184,6 +208,23 @@ function ChatContainer() {
                         <Pin className="w-4 h-4 text-cyan-500 fill-cyan-500" />
                       </div>
                     )}
+
+                    {/* Reply preview */}
+                    {msg.replyTo && (
+                      <div className={`mb-2 p-2 rounded border-l-2 ${
+                        isOwnMessage 
+                          ? "bg-cyan-700/30 border-cyan-300" 
+                          : "bg-slate-700/50 border-slate-500"
+                      }`}>
+                        <p className="text-xs opacity-70 mb-1">
+                          {msg.replyTo.senderId === authUser._id ? "You" : selectedUser.fullName}
+                        </p>
+                        <p className="text-xs opacity-80 truncate">
+                          {msg.replyTo.text || "Photo"}
+                        </p>
+                      </div>
+                    )}
+
                     {msg.image && (
                       <img 
                         src={msg.image} 
@@ -260,6 +301,7 @@ function ChatContainer() {
           onCopy={handleCopy}
           onReact={handleReact}
           onPin={handlePin}
+          onForward={handleForward}
         />
       )}
 
@@ -279,6 +321,15 @@ function ChatContainer() {
           onDeleteForEveryone={handleDeleteForEveryone}
           onCancel={() => setDeletingMessage(null)}
           canDeleteForEveryone={deletingMessage.senderId === authUser._id}
+        />
+      )}
+
+      {/* Forward Modal */}
+      {forwardingMessage && (
+        <ForwardMessageModal
+          message={forwardingMessage}
+          onClose={() => setForwardingMessage(null)}
+          onForward={handleForwardToUsers}
         />
       )}
     </div>

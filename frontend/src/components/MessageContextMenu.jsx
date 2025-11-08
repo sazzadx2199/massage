@@ -56,9 +56,9 @@ function MessageContextMenu({
     { icon: Reply, label: "Reply", onClick: onReply, show: true },
     { icon: Copy, label: "Copy", onClick: onCopy, show: message.text },
     { icon: Edit, label: "Edit", onClick: onEdit, show: isOwnMessage && message.text },
-    { icon: Forward, label: "Forward", onClick: () => {}, show: true, disabled: true },
+    { icon: Forward, label: "Forward", onClick: onForward, show: true },
     { icon: Pin, label: message.isPinned ? "Unpin" : "Pin", onClick: onPin, show: true },
-    { icon: Trash2, label: "Delete", onClick: onDelete, show: isOwnMessage, danger: true },
+    { icon: Trash2, label: "Delete", onClick: onDelete, show: true, danger: true },
   ];
 
   return (

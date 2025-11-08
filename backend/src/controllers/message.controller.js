@@ -25,7 +25,10 @@ export const getMessagesByUserId = async (req, res) => {
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
-    });
+      deletedForEveryone: false,
+    })
+    .populate('replyTo', 'text image senderId')
+    .sort({ createdAt: 1 });
 
     res.status(200).json(messages);
   } catch (error) {
@@ -36,7 +39,7 @@ export const getMessagesByUserId = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, replyTo } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
@@ -63,9 +66,13 @@ export const sendMessage = async (req, res) => {
       receiverId,
       text,
       image: imageUrl,
+      replyTo: replyTo || null,
     });
 
     await newMessage.save();
+    
+    // Populate replyTo message for response
+    await newMessage.populate('replyTo');
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {

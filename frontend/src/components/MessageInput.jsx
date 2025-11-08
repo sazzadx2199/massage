@@ -24,10 +24,12 @@ function MessageInput({ replyingTo, onCancelReply }) {
     sendMessage({
       text: text.trim(),
       image: imagePreview,
+      replyTo: replyingTo?._id,
     });
     setText("");
     setImagePreview("");
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (onCancelReply) onCancelReply();
   };
 
   const handleImageChange = (e) => {

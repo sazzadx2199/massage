@@ -118,7 +118,30 @@ function ChatContainer() {
 
   return (
     <div className="flex flex-col h-full">
-      <ChatHeader />
+      <ChatHeader onSearchClick={() => setShowSearch(!showSearch)} />
+      
+      {/* Search Bar */}
+      {showSearch && (
+        <SearchInChat 
+          messages={messages}
+          onResultClick={handleSearchResult}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
+
+      {/* Pinned Messages */}
+      {messages.some(m => m.isPinned) && (
+        <div className="bg-slate-800/70 border-b border-slate-700 px-4 py-2">
+          <div className="flex items-center gap-2 text-sm text-slate-300">
+            <Pin className="w-4 h-4 text-cyan-500" />
+            <span className="font-medium">Pinned:</span>
+            <div className="flex-1 truncate">
+              {messages.find(m => m.isPinned)?.text || "Image"}
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex-1 px-4 md:px-6 overflow-y-auto py-4 md:py-8">
         {messages.length > 0 && !isMessagesLoading ? (
           <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
@@ -147,13 +170,20 @@ function ChatContainer() {
 
                   {/* Message bubble */}
                   <div
+                    id={`msg-${msg._id}`}
                     onContextMenu={(e) => handleContextMenu(e, msg)}
                     className={`relative max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
                       isOwnMessage
                         ? "bg-cyan-600 text-white rounded-2xl rounded-br-md"
                         : "bg-slate-800 text-slate-200 rounded-2xl rounded-bl-md"
-                    }`}
+                    } ${msg.isPinned ? "ring-2 ring-cyan-500/50" : ""}`}
                   >
+                    {/* Pin indicator */}
+                    {msg.isPinned && (
+                      <div className="absolute -top-2 -right-2">
+                        <Pin className="w-4 h-4 text-cyan-500 fill-cyan-500" />
+                      </div>
+                    )}
                     {msg.image && (
                       <img 
                         src={msg.image} 
@@ -229,6 +259,7 @@ function ChatContainer() {
           onDelete={handleDelete}
           onCopy={handleCopy}
           onReact={handleReact}
+          onPin={handlePin}
         />
       )}
 

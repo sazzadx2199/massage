@@ -1,9 +1,9 @@
-import { XIcon } from "lucide-react";
+import { XIcon, Search } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 
-function ChatHeader() {
+function ChatHeader({ onSearchClick }) {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { onlineUsers } = useAuthStore();
   const isOnline = onlineUsers.includes(selectedUser._id);
@@ -37,13 +37,23 @@ function ChatHeader() {
         </div>
       </div>
 
-      <button 
-        onClick={() => setSelectedUser(null)}
-        className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-        aria-label="Close chat"
-      >
-        <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors" />
-      </button>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={onSearchClick}
+          className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          aria-label="Search in chat"
+        >
+          <Search className="w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors" />
+        </button>
+        
+        <button 
+          onClick={() => setSelectedUser(null)}
+          className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          aria-label="Close chat"
+        >
+          <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors" />
+        </button>
+      </div>
     </div>
   );
 }

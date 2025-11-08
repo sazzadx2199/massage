@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import useKeyboardSound from "../hooks/useKeyboardSound";
 import { useChatStore } from "../store/useChatStore";
+import { useSettingsStore } from "../store/useSettingsStore";
 import toast from "react-hot-toast";
 import { ImageIcon, SendIcon, XIcon } from "lucide-react";
 
@@ -12,6 +13,7 @@ function MessageInput() {
   const fileInputRef = useRef(null);
 
   const { sendMessage, isSoundEnabled } = useChatStore();
+  const { enterToSend, fontSize } = useSettingsStore();
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -44,6 +46,13 @@ function MessageInput() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleKeyDown = (e) => {
+    if (enterToSend && e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   return (
     <div className="p-3 md:p-4 border-t border-slate-700/50 bg-slate-800/30">
       {imagePreview && (
@@ -73,7 +82,12 @@ function MessageInput() {
             setText(e.target.value);
             isSoundEnabled && playRandomKeyStrokeSound();
           }}
-          className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+          onKeyDown={handleKeyDown}
+          className={`flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg py-2.5 md:py-3 px-3 md:px-4 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all ${
+            fontSize === "small" ? "text-xs md:text-sm" : 
+            fontSize === "large" ? "text-base md:text-lg" : 
+            "text-sm md:text-base"
+          }`}
           placeholder="Type your message..."
         />
 

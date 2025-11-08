@@ -38,15 +38,15 @@ function SettingsPage() {
   };
 
   const settingsItems = [
-    { icon: UserIcon, label: "My Account", onClick: () => {} },
-    { icon: BellIcon, label: "Notifications and Sounds", onClick: toggleSound },
-    { icon: LockIcon, label: "Privacy and Security", onClick: () => {} },
-    { icon: MessageSquareIcon, label: "Chat Settings", onClick: () => {} },
-    { icon: FolderIcon, label: "Folders", onClick: () => {} },
-    { icon: SlidersIcon, label: "Advanced", onClick: () => {} },
-    { icon: Volume2Icon, label: "Speakers and Camera", onClick: () => {} },
-    { icon: BatteryIcon, label: "Battery and Animations", onClick: () => {} },
-    { icon: LanguagesIcon, label: "Language", value: "English", onClick: () => {} },
+    { icon: UserIcon, label: "My Account", onClick: () => {}, disabled: true },
+    { icon: BellIcon, label: "Notifications and Sounds", onClick: () => navigate("/settings/notifications") },
+    { icon: LockIcon, label: "Privacy and Security", onClick: () => navigate("/settings/privacy") },
+    { icon: MessageSquareIcon, label: "Chat Settings", onClick: () => navigate("/settings/chat") },
+    { icon: FolderIcon, label: "Folders", onClick: () => {}, disabled: true },
+    { icon: SlidersIcon, label: "Advanced", onClick: () => {}, disabled: true },
+    { icon: Volume2Icon, label: "Speakers and Camera", onClick: () => {}, disabled: true },
+    { icon: BatteryIcon, label: "Battery and Animations", onClick: () => {}, disabled: true },
+    { icon: LanguagesIcon, label: "Language", value: "English", onClick: () => {}, disabled: true },
   ];
 
   return (
@@ -101,7 +101,12 @@ function SettingsPage() {
           <button
             key={index}
             onClick={item.onClick}
-            className="w-full flex items-center gap-4 p-4 hover:bg-slate-800/50 transition-colors border-b border-slate-700/30"
+            disabled={item.disabled}
+            className={`w-full flex items-center gap-4 p-4 transition-colors border-b border-slate-700/30 ${
+              item.disabled 
+                ? "opacity-50 cursor-not-allowed" 
+                : "hover:bg-slate-800/50 cursor-pointer"
+            }`}
           >
             <item.icon className="w-5 h-5 text-slate-400" />
             <span className="flex-1 text-left text-slate-200 text-sm">
@@ -114,6 +119,9 @@ function SettingsPage() {
               <span className="text-sm text-slate-400">
                 {isSoundEnabled ? "On" : "Off"}
               </span>
+            )}
+            {!item.disabled && !item.value && (
+              <span className="text-slate-500">›</span>
             )}
           </button>
         ))}

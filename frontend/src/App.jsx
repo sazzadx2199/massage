@@ -3,6 +3,9 @@ import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import SettingsPage from "./pages/SettingsPage";
+import NotificationsSettings from "./pages/settings/NotificationsSettings";
+import PrivacySettings from "./pages/settings/PrivacySettings";
+import ChatSettings from "./pages/settings/ChatSettings";
 import { useAuthStore } from "./store/useAuthStore";
 import { useEffect } from "react";
 import PageLoader from "./components/PageLoader";
@@ -28,6 +31,9 @@ function App() {
       <Routes>
         <Route path="/" element={authUser ? <ChatPage /> : <Navigate to={"/login"} />} />
         <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to={"/login"} />} />
+        <Route path="/settings/notifications" element={authUser ? <NotificationsSettings /> : <Navigate to={"/login"} />} />
+        <Route path="/settings/privacy" element={authUser ? <PrivacySettings /> : <Navigate to={"/login"} />} />
+        <Route path="/settings/chat" element={authUser ? <ChatSettings /> : <Navigate to={"/login"} />} />
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
         <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to={"/"} />} />
       </Routes>

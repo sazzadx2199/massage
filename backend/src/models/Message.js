@@ -57,6 +57,14 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Pin feature
+    isPinned: {
+      type: Boolean,
+      default: false,
+    },
+    pinnedAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

@@ -310,3 +310,33 @@ export const markAsRead = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// Pin/Unpin message
+export const togglePinMessage = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if user is part of the conversation
+    if (
+      message.senderId.toString() !== userId.toString() &&
+      message.receiverId.toString() !== userId.toString()
+    ) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    message.isPinned = !message.isPinned;
+    message.pinnedAt = message.isPinned ? new Date() : null;
+    await message.save();
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.log("Error in togglePinMessage:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

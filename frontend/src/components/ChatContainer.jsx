@@ -9,6 +9,8 @@ import TypingIndicator from "./TypingIndicator";
 import MessageContextMenu from "./MessageContextMenu";
 import EditMessageModal from "./EditMessageModal";
 import DeleteMessageModal from "./DeleteMessageModal";
+import SearchInChat from "./SearchInChat";
+import { Pin } from "lucide-react";
 import toast from "react-hot-toast";
 
 function ChatContainer() {
@@ -24,6 +26,7 @@ function ChatContainer() {
     editMessage,
     addReaction,
     markMessagesAsRead,
+    togglePinMessage,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
@@ -33,6 +36,7 @@ function ChatContainer() {
   const [editingMessage, setEditingMessage] = useState(null);
   const [deletingMessage, setDeletingMessage] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     getMessagesByUserId(selectedUser._id);
@@ -96,6 +100,20 @@ function ChatContainer() {
   const handleDeleteForEveryone = async () => {
     await deleteMessage(deletingMessage._id, true);
     setDeletingMessage(null);
+  };
+
+  const handlePin = async () => {
+    await togglePinMessage(contextMenu.message._id);
+  };
+
+  const handleSearchResult = (message) => {
+    // Scroll to message
+    const messageElement = document.getElementById(`msg-${message._id}`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      messageElement.classList.add("highlight-message");
+      setTimeout(() => messageElement.classList.remove("highlight-message"), 2000);
+    }
   };
 
   return (

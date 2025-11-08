@@ -206,4 +206,22 @@ export const useChatStore = create((set, get) => ({
       console.error("Failed to mark messages as read:", error);
     }
   },
+
+  // Toggle pin message
+  togglePinMessage: async (messageId) => {
+    try {
+      const res = await axiosInstance.put(`/messages/${messageId}/pin`);
+      
+      // Update in UI
+      set({ 
+        messages: get().messages.map(m => 
+          m._id === messageId ? res.data : m
+        )
+      });
+      
+      toast.success(res.data.isPinned ? "Message pinned" : "Message unpinned");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to pin message");
+    }
+  },
 }));

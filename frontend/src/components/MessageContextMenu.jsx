@@ -17,7 +17,8 @@ function MessageContextMenu({
   onEdit, 
   onDelete, 
   onCopy,
-  onReact 
+  onReact,
+  onPin 
 }) {
   const menuRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState(position);
@@ -56,7 +57,7 @@ function MessageContextMenu({
     { icon: Copy, label: "Copy", onClick: onCopy, show: message.text },
     { icon: Edit, label: "Edit", onClick: onEdit, show: isOwnMessage && message.text },
     { icon: Forward, label: "Forward", onClick: () => {}, show: true, disabled: true },
-    { icon: Pin, label: "Pin", onClick: () => {}, show: true, disabled: true },
+    { icon: Pin, label: message.isPinned ? "Unpin" : "Pin", onClick: onPin, show: true },
     { icon: Trash2, label: "Delete", onClick: onDelete, show: isOwnMessage, danger: true },
   ];
 

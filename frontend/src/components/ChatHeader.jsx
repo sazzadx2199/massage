@@ -128,6 +128,7 @@ function ChatHeader({ onSearchClick }) {
           roomId={`${authUser._id}-${selectedUser._id}`}
           userName={authUser.fullName}
           userId={authUser._id}
+          callType={callType}
         />
       )}
     </div>

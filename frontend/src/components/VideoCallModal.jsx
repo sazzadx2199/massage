@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 
-function VideoCallModal({ isOpen, onClose, roomId, userName, userId }) {
+function VideoCallModal({ isOpen, onClose, roomId, userName, userId, callType = "video" }) {
   const containerRef = useRef(null);
   const zpRef = useRef(null);
 
@@ -40,21 +40,35 @@ function VideoCallModal({ isOpen, onClose, roomId, userName, userId }) {
         zpRef.current = zp;
 
         console.log("✓ Joining room:", roomId);
-        // Start call
-        zp.joinRoom({
+        
+        // Configure call based on type
+        const callConfig = {
           container: containerRef.current,
           scenario: {
             mode: ZegoUIKitPrebuilt.OneONoneCall, // 1-on-1 call
           },
-          showScreenSharingButton: true,
+          showScreenSharingButton: callType === "video",
           showPreJoinView: false,
+          turnOnCameraWhenJoining: callType === "video",
+          turnOnMicrophoneWhenJoining: true,
+          showMyCameraToggleButton: callType === "video",
+          showMyMicrophoneToggleButton: true,
+          showAudioVideoSettingsButton: true,
+          showTextChat: false,
+          showUserList: false,
+          maxUsers: 2,
+          layout: callType === "audio" ? "Auto" : "Grid",
+          showLayoutButton: false,
           onLeaveRoom: () => {
             console.log("✓ Left room");
             onClose();
           },
-        });
+        };
+
+        // Start call
+        zp.joinRoom(callConfig);
         
-        console.log("✓ Video call started!");
+        console.log(`✓ ${callType === "video" ? "Video" : "Audio"} call started!`);
       } catch (error) {
         console.error("❌ Video call error:", error);
         alert("Failed to start video call: " + error.message);

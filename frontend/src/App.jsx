@@ -101,6 +101,7 @@ function App() {
           roomId={activeCall.roomId}
           userName={authUser.fullName}
           userId={authUser._id}
+          callType={activeCall.callType}
         />
       )}
 

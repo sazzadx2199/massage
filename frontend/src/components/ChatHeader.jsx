@@ -124,7 +124,13 @@ function ChatHeader({ onSearchClick }) {
       {showVideoCall && (
         <VideoCallModal
           isOpen={showVideoCall}
-          onClose={() => setShowVideoCall(false)}
+          onClose={() => {
+            setShowVideoCall(false);
+            // Notify other user that call ended
+            socket.emit("endCall", {
+              receiverId: selectedUser._id,
+            });
+          }}
           roomId={`${authUser._id}-${selectedUser._id}`}
           userName={authUser.fullName}
           userId={authUser._id}

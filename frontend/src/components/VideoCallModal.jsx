@@ -10,39 +10,55 @@ function VideoCallModal({ isOpen, onClose, roomId, userName, userId }) {
     if (!isOpen || !containerRef.current) return;
 
     const initCall = async () => {
-      // Generate Kit Token
-      const appID = parseInt(import.meta.env.VITE_ZEGO_APP_ID);
-      const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET;
-      
-      if (!appID || !serverSecret) {
-        console.error("ZegoCloud credentials not found!");
-        return;
+      try {
+        // Generate Kit Token
+        const appID = parseInt(import.meta.env.VITE_ZEGO_APP_ID);
+        const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET;
+        
+        console.log("ZegoCloud Init:", { appID, serverSecret: serverSecret ? "✓" : "✗", roomId, userId, userName });
+        
+        if (!appID || !serverSecret) {
+          console.error("❌ ZegoCloud credentials not found!");
+          console.error("AppID:", appID);
+          console.error("ServerSecret:", serverSecret ? "exists" : "missing");
+          alert("Video call credentials not configured. Please check environment variables.");
+          return;
+        }
+
+        console.log("✓ Generating token...");
+        const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+          appID,
+          serverSecret,
+          roomId,
+          userId,
+          userName
+        );
+
+        console.log("✓ Creating ZegoCloud instance...");
+        // Create instance
+        const zp = ZegoUIKitPrebuilt.create(kitToken);
+        zpRef.current = zp;
+
+        console.log("✓ Joining room:", roomId);
+        // Start call
+        zp.joinRoom({
+          container: containerRef.current,
+          scenario: {
+            mode: ZegoUIKitPrebuilt.OneONoneCall, // 1-on-1 call
+          },
+          showScreenSharingButton: true,
+          showPreJoinView: false,
+          onLeaveRoom: () => {
+            console.log("✓ Left room");
+            onClose();
+          },
+        });
+        
+        console.log("✓ Video call started!");
+      } catch (error) {
+        console.error("❌ Video call error:", error);
+        alert("Failed to start video call: " + error.message);
       }
-
-      const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-        appID,
-        serverSecret,
-        roomId,
-        userId,
-        userName
-      );
-
-      // Create instance
-      const zp = ZegoUIKitPrebuilt.create(kitToken);
-      zpRef.current = zp;
-
-      // Start call
-      zp.joinRoom({
-        container: containerRef.current,
-        scenario: {
-          mode: ZegoUIKitPrebuilt.OneONoneCall, // 1-on-1 call
-        },
-        showScreenSharingButton: true,
-        showPreJoinView: false,
-        onLeaveRoom: () => {
-          onClose();
-        },
-      });
     };
 
     initCall();
@@ -50,6 +66,7 @@ function VideoCallModal({ isOpen, onClose, roomId, userName, userId }) {
     // Cleanup
     return () => {
       if (zpRef.current) {
+        console.log("Cleaning up video call...");
         zpRef.current.destroy();
       }
     };

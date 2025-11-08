@@ -18,7 +18,8 @@ function MessageContextMenu({
   onDelete, 
   onCopy,
   onReact,
-  onPin 
+  onPin,
+  onForward
 }) {
   const menuRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState(position);
@@ -76,10 +77,7 @@ function MessageContextMenu({
         {reactions.map((emoji) => (
           <button
             key={emoji}
-            onClick={() => {
-              onReact(emoji);
-              onClose();
-            }}
+            onClick={() => onReact(emoji)}
             className="text-2xl hover:scale-125 transition-transform p-1 rounded hover:bg-slate-700"
           >
             {emoji}
@@ -95,7 +93,6 @@ function MessageContextMenu({
             onClick={() => {
               if (!item.disabled) {
                 item.onClick();
-                onClose();
               }
             }}
             disabled={item.disabled}

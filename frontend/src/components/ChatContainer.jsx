@@ -68,14 +68,17 @@ function ChatContainer() {
 
   const handleReply = () => {
     setReplyingTo(contextMenu.message);
+    setContextMenu(null);
   };
 
   const handleEdit = () => {
     setEditingMessage(contextMenu.message);
+    setContextMenu(null);
   };
 
   const handleDelete = () => {
     setDeletingMessage(contextMenu.message);
+    setContextMenu(null);
   };
 
   const handleCopy = () => {
@@ -83,10 +86,12 @@ function ChatContainer() {
       navigator.clipboard.writeText(contextMenu.message.text);
       toast.success("Message copied!");
     }
+    setContextMenu(null);
   };
 
   const handleReact = async (emoji) => {
     await addReaction(contextMenu.message._id, emoji);
+    setContextMenu(null);
   };
 
   const handleSaveEdit = async (newText) => {
@@ -106,14 +111,17 @@ function ChatContainer() {
 
   const handlePin = async () => {
     await togglePinMessage(contextMenu.message._id);
+    setContextMenu(null);
   };
 
   const handleForward = () => {
     setForwardingMessage(contextMenu.message);
+    setContextMenu(null);
   };
 
   const handleForwardToUsers = async (userIds) => {
     try {
+      const { sendMessage } = useChatStore.getState();
       const messageData = {
         text: forwardingMessage.text,
         image: forwardingMessage.image,
@@ -121,7 +129,18 @@ function ChatContainer() {
 
       // Send to each selected user
       for (const userId of userIds) {
-        await useChatStore.getState().sendMessage(messageData);
+        // Temporarily set selected user for sending
+        const originalSelectedUser = useChatStore.getState().selectedUser;
+        const targetUser = [...useChatStore.getState().chats, ...useChatStore.getState().allContacts]
+          .find(u => u._id === userId);
+        
+        if (targetUser) {
+          useChatStore.getState().setSelectedUser(targetUser);
+          await sendMessage(messageData);
+        }
+        
+        // Restore original selected user
+        useChatStore.getState().setSelectedUser(originalSelectedUser);
       }
 
       toast.success(`Message forwarded to ${userIds.length} ${userIds.length === 1 ? 'person' : 'people'}`);

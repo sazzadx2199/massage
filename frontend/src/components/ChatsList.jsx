@@ -69,23 +69,33 @@ function ChatsList({ searchTerm = "" }) {
             {/* Chat info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between mb-1">
-                <h4 className="text-slate-200 font-medium truncate text-sm">
+                <h4 className={`truncate text-sm ${
+                  chat.unreadCount > 0 
+                    ? "text-slate-100 font-semibold" 
+                    : "text-slate-200 font-medium"
+                }`}>
                   {chat.fullName}
                 </h4>
                 {chat.lastMessageTime && (
-                  <span className="text-xs text-slate-400 ml-2 flex-shrink-0">
+                  <span className={`text-xs ml-2 flex-shrink-0 ${
+                    chat.unreadCount > 0 ? "text-cyan-400 font-medium" : "text-slate-400"
+                  }`}>
                     {formatTime(chat.lastMessageTime)}
                   </span>
                 )}
               </div>
               
               <div className="flex items-center justify-between">
-                <p className="text-slate-400 text-sm truncate">
+                <p className={`text-sm truncate ${
+                  chat.unreadCount > 0 
+                    ? "text-slate-300 font-medium" 
+                    : "text-slate-400"
+                }`}>
                   {chat.lastMessage || "No messages yet"}
                 </p>
                 {chat.unreadCount > 0 && (
-                  <span className="ml-2 bg-cyan-500 text-white text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0">
-                    {chat.unreadCount}
+                  <span className="ml-2 bg-cyan-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 min-w-[20px] text-center">
+                    {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                   </span>
                 )}
               </div>

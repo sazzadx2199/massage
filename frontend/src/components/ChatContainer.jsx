@@ -23,6 +23,7 @@ function ChatContainer() {
     deleteMessage,
     editMessage,
     addReaction,
+    markMessagesAsRead,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
@@ -36,10 +37,13 @@ function ChatContainer() {
   useEffect(() => {
     getMessagesByUserId(selectedUser._id);
     subscribeToMessages();
+    
+    // Mark messages as read when opening chat
+    markMessagesAsRead(selectedUser._id);
 
     // clean up
     return () => unsubscribeFromMessages();
-  }, [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages]);
+  }, [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages, markMessagesAsRead]);
 
   useEffect(() => {
     if (messageEndRef.current) {

@@ -187,4 +187,23 @@ export const useChatStore = create((set, get) => ({
       toast.error(error.response?.data?.message || "Failed to remove reaction");
     }
   },
+
+  // Mark messages as read
+  markMessagesAsRead: async (userId) => {
+    try {
+      await axiosInstance.put(`/messages/${userId}/read`);
+      
+      // Update messages in UI
+      set({ 
+        messages: get().messages.map(m => 
+          m.senderId === userId ? { ...m, isRead: true, readAt: new Date() } : m
+        )
+      });
+
+      // Refresh chat list to update unread count
+      get().getMyChatPartners();
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+    }
+  },
 }));

@@ -45,9 +45,9 @@ function MessageInput() {
   };
 
   return (
-    <div className="p-4 border-t border-slate-700/50">
+    <div className="p-3 md:p-4 border-t border-slate-700/50 bg-slate-800/30">
       {imagePreview && (
-        <div className="max-w-3xl mx-auto mb-3 flex items-center">
+        <div className="max-w-4xl mx-auto mb-3 flex items-center">
           <div className="relative">
             <img
               src={imagePreview}
@@ -65,7 +65,7 @@ function MessageInput() {
         </div>
       )}
 
-      <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto flex space-x-2 md:space-x-4">
+      <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex space-x-2 md:space-x-3">
         <input
           type="text"
           value={text}
@@ -73,7 +73,7 @@ function MessageInput() {
             setText(e.target.value);
             isSoundEnabled && playRandomKeyStrokeSound();
           }}
-          className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg py-2 px-3 md:px-4 text-sm md:text-base"
+          className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-lg py-2.5 md:py-3 px-3 md:px-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
           placeholder="Type your message..."
         />
 
@@ -88,8 +88,8 @@ function MessageInput() {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className={`bg-slate-800/50 text-slate-400 hover:text-slate-200 rounded-lg px-3 md:px-4 transition-colors ${
-            imagePreview ? "text-cyan-500" : ""
+          className={`bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-slate-200 rounded-lg px-3 md:px-4 py-2.5 md:py-3 transition-all ${
+            imagePreview ? "text-cyan-500 bg-cyan-500/10" : ""
           }`}
           aria-label="Attach image"
         >
@@ -98,7 +98,7 @@ function MessageInput() {
         <button
           type="submit"
           disabled={!text.trim() && !imagePreview}
-          className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg px-3 md:px-4 py-2 font-medium hover:from-cyan-600 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg px-4 md:px-6 py-2.5 md:py-3 font-medium hover:from-cyan-600 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
           aria-label="Send message"
         >
           <SendIcon className="w-5 h-5" />

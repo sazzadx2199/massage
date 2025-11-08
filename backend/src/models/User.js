@@ -20,6 +20,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    bio: {
+      type: String,
+      maxlength: 70,
+      default: "",
+    },
   },
   { timestamps: true } // createdAt & updatedAt
 );

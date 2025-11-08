@@ -38,7 +38,7 @@ function SettingsPage() {
   };
 
   const settingsItems = [
-    { icon: UserIcon, label: "My Account", onClick: () => {}, disabled: true },
+    { icon: UserIcon, label: "My Account", onClick: () => navigate("/settings/account") },
     { icon: BellIcon, label: "Notifications and Sounds", onClick: () => navigate("/settings/notifications") },
     { icon: LockIcon, label: "Privacy and Security", onClick: () => navigate("/settings/privacy") },
     { icon: MessageSquareIcon, label: "Chat Settings", onClick: () => navigate("/settings/chat") },

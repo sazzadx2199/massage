@@ -30,14 +30,17 @@ function App() {
     if (!socket || !authUser) return;
 
     socket.on("incomingCall", (callData) => {
+      console.log("Incoming call:", callData);
       setIncomingCall(callData);
     });
 
     socket.on("callRejected", () => {
+      console.log("Call rejected by other user");
       endCall();
     });
 
     socket.on("callEnded", () => {
+      console.log("Call ended by other user");
       endCall();
     });
 

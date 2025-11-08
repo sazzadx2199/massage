@@ -81,10 +81,15 @@ function VideoCallModal({ isOpen, onClose, roomId, userName, userId, callType = 
     return () => {
       if (zpRef.current) {
         console.log("Cleaning up video call...");
-        zpRef.current.destroy();
+        try {
+          zpRef.current.destroy();
+          zpRef.current = null;
+        } catch (error) {
+          console.error("Error destroying call:", error);
+        }
       }
     };
-  }, [isOpen, roomId, userName, userId, onClose]);
+  }, [isOpen, roomId, userName, userId, onClose, callType]);
 
   if (!isOpen) return null;
 

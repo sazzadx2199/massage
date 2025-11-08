@@ -12,6 +12,8 @@ function ChatHeader({ onSearchClick }) {
   const [callType, setCallType] = useState("video");
 
   const handleVideoCall = () => {
+    if (showVideoCall) return; // Prevent multiple calls
+    
     const roomId = `${authUser._id}-${selectedUser._id}`;
     
     // Send call notification via socket
@@ -31,6 +33,8 @@ function ChatHeader({ onSearchClick }) {
   };
 
   const handleAudioCall = () => {
+    if (showVideoCall) return; // Prevent multiple calls
+    
     const roomId = `${authUser._id}-${selectedUser._id}`;
     
     // Send call notification via socket
@@ -47,6 +51,15 @@ function ChatHeader({ onSearchClick }) {
 
     setCallType("audio");
     setShowVideoCall(true);
+  };
+
+  const handleEndCall = () => {
+    console.log("Ending call from ChatHeader");
+    setShowVideoCall(false);
+    // Notify other user that call ended
+    socket.emit("endCall", {
+      receiverId: selectedUser._id,
+    });
   };
 
   useEffect(() => {
@@ -124,13 +137,7 @@ function ChatHeader({ onSearchClick }) {
       {showVideoCall && (
         <VideoCallModal
           isOpen={showVideoCall}
-          onClose={() => {
-            setShowVideoCall(false);
-            // Notify other user that call ended
-            socket.emit("endCall", {
-              receiverId: selectedUser._id,
-            });
-          }}
+          onClose={handleEndCall}
           roomId={`${authUser._id}-${selectedUser._id}`}
           userName={authUser.fullName}
           userId={authUser._id}

@@ -112,7 +112,6 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
   },
-}));
 
   // Delete message
   deleteMessage: async (messageId, deleteForEveryone = false) => {
@@ -188,3 +187,4 @@ export const useChatStore = create((set, get) => ({
       toast.error(error.response?.data?.message || "Failed to remove reaction");
     }
   },
+}));

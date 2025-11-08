@@ -106,3 +106,150 @@ export const getChatPartners = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// Delete message
+export const deleteMessage = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const { deleteForEveryone } = req.body;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if user is sender
+    if (message.senderId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only delete your own messages" });
+    }
+
+    if (deleteForEveryone) {
+      message.deletedForEveryone = true;
+      await message.save();
+
+      // Notify receiver via socket
+      const receiverSocketId = getReceiverSocketId(message.receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("messageDeleted", { messageId, deleteForEveryone: true });
+      }
+    } else {
+      // Delete for me only
+      if (!message.deletedFor.includes(userId)) {
+        message.deletedFor.push(userId);
+        await message.save();
+      }
+    }
+
+    res.status(200).json({ message: "Message deleted successfully" });
+  } catch (error) {
+    console.log("Error in deleteMessage:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Edit message
+export const editMessage = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if user is sender
+    if (message.senderId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only edit your own messages" });
+    }
+
+    message.text = text;
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+
+    // Notify receiver via socket
+    const receiverSocketId = getReceiverSocketId(message.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageEdited", message);
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.log("Error in editMessage:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Add reaction
+export const addReaction = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Remove existing reaction from this user
+    message.reactions = message.reactions.filter(
+      (r) => r.userId.toString() !== userId.toString()
+    );
+
+    // Add new reaction
+    message.reactions.push({ userId, emoji });
+    await message.save();
+
+    // Notify both users via socket
+    const receiverSocketId = getReceiverSocketId(
+      message.senderId.toString() === userId.toString() 
+        ? message.receiverId 
+        : message.senderId
+    );
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("reactionAdded", { messageId, userId, emoji });
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.log("Error in addReaction:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Remove reaction
+export const removeReaction = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    message.reactions = message.reactions.filter(
+      (r) => r.userId.toString() !== userId.toString()
+    );
+    await message.save();
+
+    // Notify via socket
+    const receiverSocketId = getReceiverSocketId(
+      message.senderId.toString() === userId.toString() 
+        ? message.receiverId 
+        : message.senderId
+    );
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("reactionRemoved", { messageId, userId });
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.log("Error in removeReaction:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

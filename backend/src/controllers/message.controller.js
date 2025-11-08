@@ -86,21 +86,53 @@ export const getChatPartners = async (req, res) => {
     // find all the messages where the logged-in user is either sender or receiver
     const messages = await Message.find({
       $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
+      deletedForEveryone: false,
+    }).sort({ createdAt: -1 });
+
+    const chatPartnersMap = new Map();
+
+    messages.forEach((msg) => {
+      const partnerId = msg.senderId.toString() === loggedInUserId.toString()
+        ? msg.receiverId.toString()
+        : msg.senderId.toString();
+
+      if (!chatPartnersMap.has(partnerId)) {
+        // Count unread messages (received by logged-in user and not read)
+        const unreadCount = messages.filter(
+          m => m.receiverId.toString() === loggedInUserId.toString() &&
+               m.senderId.toString() === partnerId &&
+               !m.isRead
+        ).length;
+
+        chatPartnersMap.set(partnerId, {
+          userId: partnerId,
+          lastMessage: msg.text || (msg.image ? "Photo" : ""),
+          lastMessageTime: msg.createdAt,
+          unreadCount,
+        });
+      }
     });
 
-    const chatPartnerIds = [
-      ...new Set(
-        messages.map((msg) =>
-          msg.senderId.toString() === loggedInUserId.toString()
-            ? msg.receiverId.toString()
-            : msg.senderId.toString()
-        )
-      ),
-    ];
-
+    const chatPartnerIds = Array.from(chatPartnersMap.keys());
     const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password");
 
-    res.status(200).json(chatPartners);
+    // Merge user data with chat metadata
+    const enrichedChatPartners = chatPartners.map(partner => {
+      const chatData = chatPartnersMap.get(partner._id.toString());
+      return {
+        ...partner.toObject(),
+        lastMessage: chatData.lastMessage,
+        lastMessageTime: chatData.lastMessageTime,
+        unreadCount: chatData.unreadCount,
+      };
+    });
+
+    // Sort by last message time
+    enrichedChatPartners.sort((a, b) => 
+      new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
+    );
+
+    res.status(200).json(enrichedChatPartners);
   } catch (error) {
     console.error("Error in getChatPartners: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -250,6 +282,31 @@ export const removeReaction = async (req, res) => {
     res.status(200).json(message);
   } catch (error) {
     console.log("Error in removeReaction:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Mark messages as read
+export const markAsRead = async (req, res) => {
+  try {
+    const { id: senderId } = req.params;
+    const receiverId = req.user._id;
+
+    await Message.updateMany(
+      {
+        senderId,
+        receiverId,
+        isRead: false,
+      },
+      {
+        isRead: true,
+        readAt: new Date(),
+      }
+    );
+
+    res.status(200).json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.log("Error in markAsRead:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -113,3 +113,78 @@ export const useChatStore = create((set, get) => ({
     socket.off("newMessage");
   },
 }));
+
+  // Delete message
+  deleteMessage: async (messageId, deleteForEveryone = false) => {
+    try {
+      await axiosInstance.delete(`/messages/${messageId}`, {
+        data: { deleteForEveryone }
+      });
+      
+      if (deleteForEveryone) {
+        // Remove from UI
+        set({ messages: get().messages.filter(m => m._id !== messageId) });
+      } else {
+        // Mark as deleted for current user
+        set({ 
+          messages: get().messages.map(m => 
+            m._id === messageId ? { ...m, deletedForMe: true } : m
+          )
+        });
+      }
+      
+      toast.success("Message deleted");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete message");
+    }
+  },
+
+  // Edit message
+  editMessage: async (messageId, newText) => {
+    try {
+      const res = await axiosInstance.put(`/messages/${messageId}`, { text: newText });
+      
+      // Update in UI
+      set({ 
+        messages: get().messages.map(m => 
+          m._id === messageId ? res.data : m
+        )
+      });
+      
+      toast.success("Message edited");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to edit message");
+    }
+  },
+
+  // Add reaction
+  addReaction: async (messageId, emoji) => {
+    try {
+      const res = await axiosInstance.post(`/messages/${messageId}/reaction`, { emoji });
+      
+      // Update in UI
+      set({ 
+        messages: get().messages.map(m => 
+          m._id === messageId ? res.data : m
+        )
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add reaction");
+    }
+  },
+
+  // Remove reaction
+  removeReaction: async (messageId) => {
+    try {
+      const res = await axiosInstance.delete(`/messages/${messageId}/reaction`);
+      
+      // Update in UI
+      set({ 
+        messages: get().messages.map(m => 
+          m._id === messageId ? res.data : m
+        )
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to remove reaction");
+    }
+  },

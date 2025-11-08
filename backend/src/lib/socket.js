@@ -3,6 +3,7 @@ import http from "http";
 import express from "express";
 import { ENV } from "./env.js";
 import { socketAuthMiddleware } from "../middleware/socket.auth.middleware.js";
+import Message from "../models/Message.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -24,6 +25,45 @@ export function getReceiverSocketId(userId) {
 
 // this is for storig online users
 const userSocketMap = {}; // {userId:socketId}
+
+// Store active calls with start time
+const activeCalls = {}; // {roomId: {callerId, receiverId, callType, startTime}}
+
+// Helper function to save call history
+async function saveCallHistory(senderId, receiverId, callType, duration, status) {
+  try {
+    console.log(`📞 Saving call history: ${callType} call - ${status} - ${duration}s`);
+    
+    const callMessage = new Message({
+      senderId,
+      receiverId,
+      isCallMessage: true,
+      callData: {
+        callType,
+        duration,
+        status,
+      },
+    });
+
+    await callMessage.save();
+    console.log("✅ Call history saved:", callMessage._id);
+
+    // Notify both users via socket
+    const senderSocketId = getReceiverSocketId(senderId);
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("newMessage", callMessage);
+      console.log("📤 Sent call history to sender");
+    }
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", callMessage);
+      console.log("📤 Sent call history to receiver");
+    }
+  } catch (error) {
+    console.error("❌ Error saving call history:", error);
+  }
+}
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.user.fullName);
@@ -53,32 +93,72 @@ io.on("connection", (socket) => {
   socket.on("callUser", ({ receiverId, callType, roomId, caller }) => {
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
+      // Store call info
+      activeCalls[roomId] = {
+        callerId: caller._id,
+        receiverId,
+        callType,
+        startTime: null, // Will be set when accepted
+      };
+
       io.to(receiverSocketId).emit("incomingCall", {
         caller,
         callType,
         roomId,
       });
+    } else {
+      // Receiver is offline - save as missed call
+      saveCallHistory(caller._id, receiverId, callType, 0, "missed");
     }
   });
 
   socket.on("callAccepted", ({ callerId, roomId }) => {
     const callerSocketId = getReceiverSocketId(callerId);
     if (callerSocketId) {
+      // Mark call start time
+      if (activeCalls[roomId]) {
+        activeCalls[roomId].startTime = Date.now();
+      }
       io.to(callerSocketId).emit("callAccepted", { roomId });
     }
   });
 
-  socket.on("callRejected", ({ callerId }) => {
+  socket.on("callRejected", ({ callerId, receiverId, callType, roomId }) => {
+    console.log(`📞 Call rejected: ${callType} from ${callerId} to ${receiverId}`);
+    
     const callerSocketId = getReceiverSocketId(callerId);
     if (callerSocketId) {
       io.to(callerSocketId).emit("callRejected");
     }
+    
+    // Save as rejected call
+    saveCallHistory(callerId, receiverId, callType, 0, "rejected");
+    
+    // Clean up
+    delete activeCalls[roomId];
   });
 
-  socket.on("endCall", ({ receiverId }) => {
+  socket.on("endCall", ({ receiverId, roomId }) => {
+    console.log(`📞 Call ended: roomId=${roomId}`);
+    
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("callEnded");
+    }
+
+    // Calculate duration and save call history
+    if (activeCalls[roomId]) {
+      const { callerId, receiverId: callReceiverId, callType, startTime } = activeCalls[roomId];
+      const duration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+      const status = startTime ? "completed" : "cancelled";
+      
+      console.log(`📞 Call duration: ${duration}s, status: ${status}`);
+      saveCallHistory(callerId, callReceiverId, callType, duration, status);
+      
+      // Clean up
+      delete activeCalls[roomId];
+    } else {
+      console.log(`⚠️ No active call found for roomId: ${roomId}`);
     }
   });
 

@@ -8,7 +8,22 @@ function IncomingCallModal({ caller, callType, onAccept, onReject }) {
     // Play ringtone
     const ringtone = new Audio("/sounds/ringtone.mp3");
     ringtone.loop = true;
-    ringtone.play().catch(e => console.log("Ringtone play failed:", e));
+    ringtone.volume = 0.7;
+    
+    const playRingtone = async () => {
+      try {
+        await ringtone.play();
+        console.log("✅ Ringtone playing");
+      } catch (error) {
+        console.error("❌ Ringtone play failed:", error);
+        // Try to play on user interaction
+        document.addEventListener('click', () => {
+          ringtone.play().catch(e => console.error("Still failed:", e));
+        }, { once: true });
+      }
+    };
+    
+    playRingtone();
 
     return () => {
       ringtone.pause();

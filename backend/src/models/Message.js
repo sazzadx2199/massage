@@ -65,6 +65,25 @@ const messageSchema = new mongoose.Schema(
     pinnedAt: {
       type: Date,
     },
+    // Call history
+    isCallMessage: {
+      type: Boolean,
+      default: false,
+    },
+    callData: {
+      callType: {
+        type: String,
+        enum: ["audio", "video"],
+      },
+      duration: {
+        type: Number, // in seconds
+        default: 0,
+      },
+      status: {
+        type: String,
+        enum: ["missed", "rejected", "completed", "cancelled"],
+      },
+    },
   },
   { timestamps: true }
 );

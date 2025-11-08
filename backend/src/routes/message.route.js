@@ -10,6 +10,7 @@ import {
   removeReaction,
   markAsRead,
   togglePinMessage,
+  saveCallHistory,
 } from "../controllers/message.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
@@ -24,6 +25,7 @@ router.get("/contacts", getAllContacts);
 router.get("/chats", getChatPartners);
 router.get("/:id", getMessagesByUserId);
 router.post("/send/:id", sendMessage);
+router.post("/call-history", saveCallHistory);
 router.put("/:id/read", markAsRead);
 router.put("/:id/pin", togglePinMessage);
 router.delete("/:id", deleteMessage);

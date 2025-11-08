@@ -19,7 +19,7 @@ import { Toaster } from "react-hot-toast";
 
 function App() {
   const { checkAuth, isCheckingAuth, authUser, socket } = useAuthStore();
-  const { incomingCall, activeCall, isCallModalOpen, setIncomingCall, acceptCall, rejectCall, endCall } = useCallStore();
+  const { incomingCall, setIncomingCall, rejectCall, setCallStartTime } = useCallStore();
 
   useEffect(() => {
     checkAuth();
@@ -42,9 +42,15 @@ function App() {
       }
     });
 
+    socket.on("callAccepted", () => {
+      console.log("Call accepted by other user");
+      setCallStartTime();
+    });
+
     return () => {
       socket.off("incomingCall");
       socket.off("callRejected");
+      socket.off("callAccepted");
     };
   }, [socket, authUser, setIncomingCall]);
 
@@ -86,10 +92,13 @@ function App() {
             rejectCall(); // Clear incoming call state
           }}
           onReject={() => {
-            rejectCall();
             socket.emit("callRejected", {
               callerId: incomingCall.caller._id,
+              receiverId: authUser._id,
+              callType: incomingCall.callType,
+              roomId: incomingCall.roomId,
             });
+            rejectCall();
           }}
         />
       )}

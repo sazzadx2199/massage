@@ -2,7 +2,7 @@ import axios from "axios";
 
 const getBaseURL = () => {
   if (import.meta.env.MODE === "development") {
-    return "https://massage-virid-pi.vercel.app/";
+    return "http://localhost:3000/api";
   }
   
   // Production: Use environment variable or show error

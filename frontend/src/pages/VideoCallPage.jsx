@@ -180,7 +180,7 @@ function VideoCallPage() {
 
     // Notify other user
     if (socket && receiverId) {
-      socket.emit("endCall", { receiverId });
+      socket.emit("endCall", { receiverId, roomId });
     }
     
     // Navigate back

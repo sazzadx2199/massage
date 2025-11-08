@@ -134,9 +134,35 @@ export const getChatPartners = async (req, res) => {
                !m.isRead
         ).length;
 
+        // Format last message text
+        let lastMessage = "";
+        if (msg.isCallMessage) {
+          const callType = msg.callData.callType === "video" ? "Video call" : "Voice call";
+          const isSender = msg.senderId.toString() === loggedInUserId.toString();
+          
+          switch (msg.callData.status) {
+            case "missed":
+              lastMessage = isSender ? `${callType} (No answer)` : `Missed ${callType.toLowerCase()}`;
+              break;
+            case "rejected":
+              lastMessage = isSender ? `${callType} (Declined)` : `Declined ${callType.toLowerCase()}`;
+              break;
+            case "completed":
+              lastMessage = `${callType}`;
+              break;
+            case "cancelled":
+              lastMessage = `${callType} (Cancelled)`;
+              break;
+            default:
+              lastMessage = callType;
+          }
+        } else {
+          lastMessage = msg.text || (msg.image ? "Photo" : "");
+        }
+
         chatPartnersMap.set(partnerId, {
           userId: partnerId,
-          lastMessage: msg.text || (msg.image ? "Photo" : ""),
+          lastMessage,
           lastMessageTime: msg.createdAt,
           unreadCount,
         });
@@ -367,6 +393,38 @@ export const togglePinMessage = async (req, res) => {
     res.status(200).json(message);
   } catch (error) {
     console.log("Error in togglePinMessage:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Save call history
+export const saveCallHistory = async (req, res) => {
+  try {
+    const { receiverId, callType, duration, status } = req.body;
+    const senderId = req.user._id;
+
+    const callMessage = new Message({
+      senderId,
+      receiverId,
+      isCallMessage: true,
+      callData: {
+        callType,
+        duration: duration || 0,
+        status,
+      },
+    });
+
+    await callMessage.save();
+
+    // Notify receiver via socket
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", callMessage);
+    }
+
+    res.status(201).json(callMessage);
+  } catch (error) {
+    console.log("Error in saveCallHistory:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

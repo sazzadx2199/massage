@@ -11,6 +11,7 @@ import EditMessageModal from "./EditMessageModal";
 import DeleteMessageModal from "./DeleteMessageModal";
 import SearchInChat from "./SearchInChat";
 import ForwardMessageModal from "./ForwardMessageModal";
+import CallMessage from "./CallMessage";
 import { Pin } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -244,17 +245,24 @@ function ChatContainer() {
                       </div>
                     )}
 
-                    {msg.image && (
-                      <img 
-                        src={msg.image} 
-                        alt="Shared" 
-                        className="rounded-lg max-h-64 object-cover w-full mb-1" 
-                      />
-                    )}
-                    {msg.text && (
-                      <p className="text-sm md:text-base break-words whitespace-pre-wrap">
-                        {msg.text}
-                      </p>
+                    {/* Call message */}
+                    {msg.isCallMessage ? (
+                      <CallMessage message={msg} isOwnMessage={isOwnMessage} />
+                    ) : (
+                      <>
+                        {msg.image && (
+                          <img 
+                            src={msg.image} 
+                            alt="Shared" 
+                            className="rounded-lg max-h-64 object-cover w-full mb-1" 
+                          />
+                        )}
+                        {msg.text && (
+                          <p className="text-sm md:text-base break-words whitespace-pre-wrap">
+                            {msg.text}
+                          </p>
+                        )}
+                      </>
                     )}
                     
                     {/* Time, edited status, and read status */}

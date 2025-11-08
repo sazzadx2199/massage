@@ -1,12 +1,18 @@
-import { XIcon, Search } from "lucide-react";
+import { XIcon, Search, Video, Phone } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import VideoCallModal from "./VideoCallModal";
 
 function ChatHeader({ onSearchClick }) {
   const { selectedUser, setSelectedUser } = useChatStore();
-  const { onlineUsers } = useAuthStore();
+  const { onlineUsers, authUser } = useAuthStore();
   const isOnline = onlineUsers.includes(selectedUser._id);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+
+  const handleVideoCall = () => {
+    setShowVideoCall(true);
+  };
 
   useEffect(() => {
     const handleEscKey = (event) => {
@@ -38,23 +44,59 @@ function ChatHeader({ onSearchClick }) {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Video Call Button */}
+        <button 
+          onClick={handleVideoCall}
+          className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          aria-label="Video call"
+          title="Video call"
+        >
+          <Video className="w-5 h-5 text-slate-400 hover:text-green-400 transition-colors" />
+        </button>
+
+        {/* Audio Call Button */}
+        <button 
+          onClick={handleVideoCall}
+          className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          aria-label="Audio call"
+          title="Audio call"
+        >
+          <Phone className="w-5 h-5 text-slate-400 hover:text-green-400 transition-colors" />
+        </button>
+
+        {/* Search Button */}
         <button 
           onClick={onSearchClick}
           className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
           aria-label="Search in chat"
+          title="Search"
         >
           <Search className="w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors" />
         </button>
         
+        {/* Close Button */}
         <button 
           onClick={() => setSelectedUser(null)}
           className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
           aria-label="Close chat"
+          title="Close"
         >
           <XIcon className="w-5 h-5 text-slate-400 hover:text-slate-200 transition-colors" />
         </button>
       </div>
+
+      {/* Video Call Modal */}
+      {showVideoCall && (
+        <VideoCallModal
+          isOpen={showVideoCall}
+          onClose={() => setShowVideoCall(false)}
+          roomId={`${authUser._id}-${selectedUser._id}`}
+          userName={authUser.fullName}
+          userId={authUser._id}
+        />
+      )}
     </div>
   );
 }
+
 export default ChatHeader;

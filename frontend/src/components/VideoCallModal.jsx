@@ -82,6 +82,21 @@ function VideoCallModal({ isOpen, onClose, roomId, userName, userId, callType = 
       if (zpRef.current) {
         console.log("Cleaning up video call...");
         try {
+          // Stop all media tracks
+          if (containerRef.current) {
+            const videos = containerRef.current.querySelectorAll('video');
+            videos.forEach(video => {
+              if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => {
+                  track.stop();
+                  console.log("Stopped track:", track.kind);
+                });
+                video.srcObject = null;
+              }
+            });
+          }
+          
+          // Destroy ZegoCloud instance
           zpRef.current.destroy();
           zpRef.current = null;
         } catch (error) {

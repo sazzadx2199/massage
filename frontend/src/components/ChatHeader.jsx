@@ -2,7 +2,7 @@ import { XIcon, Search, Video, Phone } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 function ChatHeader({ onSearchClick }) {
   const { selectedUser, setSelectedUser } = useChatStore();

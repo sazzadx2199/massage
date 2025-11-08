@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { ENV } from "./env.js";
 
 export const generateToken = (userId, res) => {
-  const { JWT_SECRET } = ENV;
+  const { JWT_SECRET, NODE_ENV } = ENV;
   if (!JWT_SECRET) {
     throw new Error("JWT_SECRET is not configured");
   }
@@ -11,11 +11,14 @@ export const generateToken = (userId, res) => {
     expiresIn: "7d",
   });
 
+  // For production (Render/Vercel), always use secure cookies with sameSite: none
+  const isProduction = NODE_ENV === "production";
+
   res.cookie("jwt", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // MS
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in MS
     httpOnly: true, // prevent XSS attacks: cross-site scripting
-    sameSite: ENV.NODE_ENV === "production" ? "none" : "strict", // Allow cross-site cookies in production
-    secure: ENV.NODE_ENV === "production" ? true : false, // Secure must be true when sameSite is none
+    sameSite: isProduction ? "none" : "lax", // "none" for cross-origin (Vercel + Render)
+    secure: isProduction, // HTTPS required when sameSite is "none"
   });
 
   return token;

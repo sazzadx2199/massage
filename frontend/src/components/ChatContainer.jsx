@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
-import ChatHeader from "./ChatHeader";
+import { useNavigate } from "react-router";
+import WhatsAppChatHeader from "./whatsapp/WhatsAppChatHeader";
+import WhatsAppMessageInput from "./whatsapp/WhatsAppMessageInput";
+import WhatsAppMessageBubble from "./whatsapp/WhatsAppMessageBubble";
 import NoChatHistoryPlaceholder from "./NoChatHistoryPlaceholder";
-import MessageInput from "./MessageInput";
 import MessagesLoadingSkeleton from "./MessagesLoadingSkeleton";
 import TypingIndicator from "./TypingIndicator";
 import MessageContextMenu from "./MessageContextMenu";
@@ -11,7 +13,6 @@ import EditMessageModal from "./EditMessageModal";
 import DeleteMessageModal from "./DeleteMessageModal";
 import SearchInChat from "./SearchInChat";
 import ForwardMessageModal from "./ForwardMessageModal";
-import CallMessage from "./CallMessage";
 import { Pin } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,7 +31,8 @@ function ChatContainer() {
     markMessagesAsRead,
     togglePinMessage,
   } = useChatStore();
-  const { authUser } = useAuthStore();
+  const { authUser, onlineUsers, socket } = useAuthStore();
+  const navigate = useNavigate();
   const messageEndRef = useRef(null);
   
   // Context menu state
@@ -160,9 +162,46 @@ function ChatContainer() {
     }
   };
 
+  const handleVideoCall = () => {
+    const roomId = `${authUser._id}-${selectedUser._id}`;
+    socket.emit("callUser", {
+      receiverId: selectedUser._id,
+      callType: "video",
+      roomId,
+      caller: {
+        _id: authUser._id,
+        fullName: authUser.fullName,
+        profilePic: authUser.profilePic,
+      },
+    });
+    navigate(`/video-call?roomId=${roomId}&type=video&receiverId=${selectedUser._id}`);
+  };
+
+  const handleVoiceCall = () => {
+    const roomId = `${authUser._id}-${selectedUser._id}`;
+    socket.emit("callUser", {
+      receiverId: selectedUser._id,
+      callType: "audio",
+      roomId,
+      caller: {
+        _id: authUser._id,
+        fullName: authUser.fullName,
+        profilePic: authUser.profilePic,
+      },
+    });
+    navigate(`/video-call?roomId=${roomId}&type=audio&receiverId=${selectedUser._id}`);
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      <ChatHeader onSearchClick={() => setShowSearch(!showSearch)} />
+    <div className="flex flex-col h-full bg-[#ECE5DD]">
+      <WhatsAppChatHeader 
+        user={selectedUser}
+        isOnline={onlineUsers.includes(selectedUser._id)}
+        onBack={() => useChatStore.getState().setSelectedUser(null)}
+        onVideoCall={handleVideoCall}
+        onVoiceCall={handleVoiceCall}
+        onSearch={() => setShowSearch(!showSearch)}
+      />
       
       {/* Search Bar */}
       {showSearch && (
@@ -175,9 +214,9 @@ function ChatContainer() {
 
       {/* Pinned Messages */}
       {messages.some(m => m.isPinned) && (
-        <div className="bg-slate-800/70 border-b border-slate-700 px-4 py-2">
-          <div className="flex items-center gap-2 text-sm text-slate-300">
-            <Pin className="w-4 h-4 text-cyan-500" />
+        <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <Pin className="w-4 h-4 text-yellow-600" />
             <span className="font-medium">Pinned:</span>
             <div className="flex-1 truncate">
               {messages.find(m => m.isPinned)?.text || "Image"}
@@ -186,118 +225,32 @@ function ChatContainer() {
         </div>
       )}
       
-      <div className="flex-1 px-4 md:px-6 overflow-y-auto py-4 md:py-8">
+      <div className="flex-1 px-4 md:px-12 overflow-y-auto py-4"
+        style={{
+          backgroundImage: "url('/whatsapp-bg.svg')",
+          backgroundRepeat: "repeat",
+          backgroundSize: "400px 400px",
+        }}
+      >
         {messages.length > 0 && !isMessagesLoading ? (
-          <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
+          <div className="max-w-4xl mx-auto space-y-1">
             {messages.map((msg, index) => {
               const isOwnMessage = msg.senderId === authUser._id;
               const showAvatar = index === 0 || messages[index - 1].senderId !== msg.senderId;
-              const isLastInGroup = index === messages.length - 1 || messages[index + 1].senderId !== msg.senderId;
               
               return (
-                <div
+                <WhatsAppMessageBubble
                   key={msg._id}
-                  className={`flex items-end gap-2 ${isOwnMessage ? "flex-row-reverse" : "flex-row"} ${!isLastInGroup ? "mb-1" : "mb-4"}`}
-                >
-                  {/* Avatar - only show for last message in group */}
-                  {!isOwnMessage && (
-                    <div className="w-8 h-8 flex-shrink-0">
-                      {isLastInGroup && (
-                        <img 
-                          src={selectedUser.profilePic || "/avatar.png"} 
-                          alt={selectedUser.fullName}
-                          className="w-8 h-8 rounded-full"
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Message bubble */}
-                  <div
-                    id={`msg-${msg._id}`}
-                    onContextMenu={(e) => handleContextMenu(e, msg)}
-                    className={`relative max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
-                      isOwnMessage
-                        ? "bg-cyan-600 text-white rounded-2xl rounded-br-md"
-                        : "bg-slate-800 text-slate-200 rounded-2xl rounded-bl-md"
-                    } ${msg.isPinned ? "ring-2 ring-cyan-500/50" : ""}`}
-                  >
-                    {/* Pin indicator */}
-                    {msg.isPinned && (
-                      <div className="absolute -top-2 -right-2">
-                        <Pin className="w-4 h-4 text-cyan-500 fill-cyan-500" />
-                      </div>
-                    )}
-
-                    {/* Reply preview */}
-                    {msg.replyTo && (
-                      <div className={`mb-2 p-2 rounded border-l-2 ${
-                        isOwnMessage 
-                          ? "bg-cyan-700/30 border-cyan-300" 
-                          : "bg-slate-700/50 border-slate-500"
-                      }`}>
-                        <p className="text-xs opacity-70 mb-1">
-                          {msg.replyTo.senderId === authUser._id ? "You" : selectedUser.fullName}
-                        </p>
-                        <p className="text-xs opacity-80 truncate">
-                          {msg.replyTo.text || "Photo"}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Call message */}
-                    {msg.isCallMessage ? (
-                      <CallMessage message={msg} isOwnMessage={isOwnMessage} />
-                    ) : (
-                      <>
-                        {msg.image && (
-                          <img 
-                            src={msg.image} 
-                            alt="Shared" 
-                            className="rounded-lg max-h-64 object-cover w-full mb-1" 
-                          />
-                        )}
-                        {msg.text && (
-                          <p className="text-sm md:text-base break-words whitespace-pre-wrap">
-                            {msg.text}
-                          </p>
-                        )}
-                      </>
-                    )}
-                    
-                    {/* Time, edited status, and read status */}
-                    <div className={`flex items-center gap-1 mt-1 text-xs ${isOwnMessage ? "justify-end" : ""}`}>
-                      {msg.isEdited && (
-                        <span className="opacity-70 italic">edited</span>
-                      )}
-                      <span className="opacity-70">
-                        {new Date(msg.createdAt).toLocaleTimeString(undefined, {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      {isOwnMessage && (
-                        <span className="opacity-70">
-                          {msg.isRead ? "✓✓" : "✓"}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Reactions */}
-                    {msg.reactions && msg.reactions.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {msg.reactions.map((reaction, idx) => (
-                          <span 
-                            key={idx}
-                            className="text-sm bg-slate-700/50 px-2 py-0.5 rounded-full"
-                          >
-                            {reaction.emoji}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  message={{
+                    ...msg,
+                    senderAvatar: selectedUser.profilePic,
+                  }}
+                  isOwnMessage={isOwnMessage}
+                  showAvatar={showAvatar}
+                  senderName={selectedUser.fullName}
+                  onContextMenu={(e) => handleContextMenu(e, msg)}
+                  authUser={authUser}
+                />
               );
             })}
             {/* 👇 scroll target */}
@@ -310,10 +263,25 @@ function ChatContainer() {
         )}
         
         {/* Typing indicator */}
-        {typingUsers.has(selectedUser?._id) && <TypingIndicator />}
+        {typingUsers.has(selectedUser?._id) && (
+          <div className="max-w-4xl mx-auto">
+            <TypingIndicator />
+          </div>
+        )}
       </div>
 
-      <MessageInput replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} />
+      <WhatsAppMessageInput 
+        onSendMessage={async (data) => {
+          const { sendMessage } = useChatStore.getState();
+          await sendMessage({ ...data, replyTo: replyingTo?._id });
+          setReplyingTo(null);
+        }}
+        replyingTo={replyingTo ? {
+          ...replyingTo,
+          senderName: replyingTo.senderId === authUser._id ? "You" : selectedUser.fullName
+        } : null}
+        onCancelReply={() => setReplyingTo(null)}
+      />
 
       {/* Context Menu */}
       {contextMenu && (

@@ -28,7 +28,7 @@ function ContactList({ searchTerm = "" }) {
   }
 
   return (
-    <div className="space-y-0">
+    <div className="bg-white">
       {filteredContacts.map((contact) => {
         const isSelected = selectedUser?._id === contact._id;
         const isOnline = onlineUsers.includes(contact._id);
@@ -36,10 +36,10 @@ function ContactList({ searchTerm = "" }) {
         return (
           <div
             key={contact._id}
-            className={`flex items-center gap-3 p-3 cursor-pointer transition-colors border-b border-slate-700/30 ${
+            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-200 ${
               isSelected 
-                ? "bg-slate-700/50" 
-                : "hover:bg-slate-800/50"
+                ? "bg-[#F0F2F5]" 
+                : "hover:bg-[#F5F6F6]"
             }`}
             onClick={() => setSelectedUser(contact)}
           >
@@ -51,16 +51,16 @@ function ContactList({ searchTerm = "" }) {
                 className="w-12 h-12 rounded-full object-cover"
               />
               {isOnline && (
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-slate-800"></div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#25D366] rounded-full border-2 border-white"></div>
               )}
             </div>
 
             {/* Contact info */}
             <div className="flex-1 min-w-0">
-              <h4 className="text-slate-200 font-medium truncate text-sm">
+              <h4 className="text-gray-900 font-medium truncate text-[16px]">
                 {contact.fullName}
               </h4>
-              <p className="text-slate-400 text-xs truncate">
+              <p className="text-gray-600 text-[14px] truncate">
                 {isOnline ? "Online" : "Offline"}
               </p>
             </div>

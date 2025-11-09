@@ -156,9 +156,15 @@ export const useWebRTC = (roomId, isInitiator) => {
           .find(s => s.track?.kind === 'video');
         
         if (sender) {
+          console.log('🔄 Replacing video track with screen track...');
           await sender.replaceTrack(screenTrack);
-          console.log('✅ Screen track replaced');
+          console.log('✅ Screen track replaced in peer connection');
+          console.log('📡 Remote peer will now receive screen share');
+        } else {
+          console.error('❌ No video sender found in peer connection');
         }
+      } else {
+        console.error('❌ No peer connection available');
       }
 
       // Replace in local stream
@@ -201,9 +207,15 @@ export const useWebRTC = (roomId, isInitiator) => {
           .find(s => s.track?.kind === 'video');
         
         if (sender) {
+          console.log('🔄 Restoring camera track...');
           await sender.replaceTrack(originalVideoTrack.current);
-          console.log('✅ Camera track restored');
+          console.log('✅ Camera track restored in peer connection');
+          console.log('📡 Remote peer will now see camera again');
+        } else {
+          console.error('❌ No video sender found');
         }
+      } else {
+        console.error('❌ No peer connection available');
       }
 
       // Replace in local stream

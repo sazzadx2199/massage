@@ -49,12 +49,14 @@ function WhatsAppCallScreen({
   // Setup video elements
   useEffect(() => {
     if (localVideoRef.current && localStream) {
+      console.log('📹 Setting local video stream:', localStream.getVideoTracks());
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
+      console.log('📹 Setting remote video stream:', remoteStream.getVideoTracks());
       remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream]);

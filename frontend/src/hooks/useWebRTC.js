@@ -11,6 +11,7 @@ export const useWebRTC = (roomId, isInitiator) => {
   
   const peerConnection = useRef(null);
   const localStreamRef = useRef(null);
+  const iceCandidatesQueue = useRef([]);
 
   // ICE servers configuration
   const iceServers = {
@@ -23,17 +24,45 @@ export const useWebRTC = (roomId, isInitiator) => {
   // Initialize media stream
   const initializeMedia = useCallback(async (videoEnabled = true) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: videoEnabled ? { facingMode: 'user' } : false,
-      });
+      console.log('🎤 Requesting media access:', { audio: true, video: videoEnabled });
+      
+      const constraints = {
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: videoEnabled ? {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user',
+        } : false,
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('✅ Media access granted:', stream.getTracks().map(t => t.kind));
       
       localStreamRef.current = stream;
       setLocalStream(stream);
-      setIsVideoEnabled(videoEnabled);
+      setIsVideoEnabled(videoEnabled && stream.getVideoTracks().length > 0);
       return stream;
     } catch (error) {
-      console.error('Error accessing media devices:', error);
+      console.error('❌ Error accessing media devices:', error);
+      
+      // Try audio only if video fails
+      if (videoEnabled) {
+        console.log('⚠️ Retrying with audio only...');
+        try {
+          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          localStreamRef.current = audioStream;
+          setLocalStream(audioStream);
+          setIsVideoEnabled(false);
+          return audioStream;
+        } catch (audioError) {
+          console.error('❌ Audio access also failed:', audioError);
+          throw audioError;
+        }
+      }
       throw error;
     }
   }, []);
@@ -153,6 +182,22 @@ export const useWebRTC = (roomId, isInitiator) => {
     }
   }, [roomId, socket, initializeMedia, createPeerConnection]);
 
+  // Process queued ICE candidates
+  const processQueuedCandidates = useCallback(async () => {
+    if (iceCandidatesQueue.current.length > 0) {
+      console.log(`🧊 Processing ${iceCandidatesQueue.current.length} queued ICE candidates`);
+      for (const candidate of iceCandidatesQueue.current) {
+        try {
+          await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log('✅ Queued ICE candidate added');
+        } catch (error) {
+          console.error('❌ Error adding queued candidate:', error);
+        }
+      }
+      iceCandidatesQueue.current = [];
+    }
+  }, []);
+
   // Handle incoming answer
   const handleAnswer = useCallback(async (answer) => {
     try {
@@ -163,25 +208,29 @@ export const useWebRTC = (roomId, isInitiator) => {
           new RTCSessionDescription(answer)
         );
         console.log('✅ Remote description set from answer');
+        
+        // Process any queued ICE candidates
+        await processQueuedCandidates();
       } else {
         console.error('❌ No peer connection available');
       }
     } catch (error) {
       console.error('❌ Error handling answer:', error);
     }
-  }, []);
+  }, [processQueuedCandidates]);
 
   // Handle ICE candidate
   const handleIceCandidate = useCallback(async (candidate) => {
     try {
-      if (peerConnection.current) {
+      if (peerConnection.current && peerConnection.current.remoteDescription) {
         console.log('🧊 Adding ICE candidate');
         await peerConnection.current.addIceCandidate(
           new RTCIceCandidate(candidate)
         );
         console.log('✅ ICE candidate added');
       } else {
-        console.warn('⚠️ Peer connection not ready for ICE candidate');
+        console.warn('⚠️ Queueing ICE candidate (remote description not set yet)');
+        iceCandidatesQueue.current.push(candidate);
       }
     } catch (error) {
       console.error('❌ Error handling ICE candidate:', error);
@@ -222,6 +271,9 @@ export const useWebRTC = (roomId, isInitiator) => {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       console.log('✅ Remote description set');
       
+      // Process any queued ICE candidates
+      await processQueuedCandidates();
+      
       console.log('📝 Creating answer...');
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -237,7 +289,7 @@ export const useWebRTC = (roomId, isInitiator) => {
     } catch (error) {
       console.error('❌ Error handling offer:', error);
     }
-  }, [roomId, socket, initializeMedia, createPeerConnection]);
+  }, [roomId, socket, initializeMedia, createPeerConnection, processQueuedCandidates]);
 
   // Socket event listeners
   useEffect(() => {

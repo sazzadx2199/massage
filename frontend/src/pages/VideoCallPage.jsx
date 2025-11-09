@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { useAuthStore } from "../store/useAuthStore";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { useChatStore } from "../store/useChatStore";
+import { ArrowLeft, Loader2, Phone, Video, Clock, History } from "lucide-react";
 
 function VideoCallPage() {
   const [searchParams] = useSearchParams();
@@ -12,10 +13,27 @@ function VideoCallPage() {
   const zpRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [callHistory, setCallHistory] = useState([]);
 
   const roomId = searchParams.get("roomId");
   const callType = searchParams.get("type") || "video";
   const receiverId = searchParams.get("receiverId");
+  
+  const { messages, getMessagesByUserId } = useChatStore();
+
+  // Load call history
+  useEffect(() => {
+    if (receiverId) {
+      getMessagesByUserId(receiverId);
+    }
+  }, [receiverId, getMessagesByUserId]);
+
+  // Filter call history from messages
+  useEffect(() => {
+    const callMessages = messages.filter(msg => msg.isCallMessage);
+    setCallHistory(callMessages);
+  }, [messages]);
 
   // Listen for call end from other user
   useEffect(() => {
@@ -187,6 +205,34 @@ function VideoCallPage() {
     navigate("/");
   };
 
+  const formatDuration = (seconds) => {
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+  };
+
+  const formatCallTime = (date) => {
+    const now = new Date();
+    const callDate = new Date(date);
+    const diffInHours = (now - callDate) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      const minutes = Math.floor(diffInHours * 60);
+      return minutes === 0 ? "Just now" : `${minutes}m ago`;
+    } else if (diffInHours < 24) {
+      return callDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    } else if (diffInHours < 48) {
+      return "Yesterday";
+    } else if (diffInHours < 168) {
+      return callDate.toLocaleDateString(undefined, { weekday: "short" });
+    } else {
+      return callDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+  };
+
   if (error) {
     return (
       <div className="h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -231,6 +277,122 @@ function VideoCallPage() {
           {callType === "video" ? "📹 Video Call" : "📞 Audio Call"}
         </span>
       </div>
+
+      {/* Call History Button */}
+      {callHistory.length > 0 && (
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          className="absolute top-20 right-4 z-40 bg-slate-800/80 hover:bg-slate-700 text-white p-3 rounded-full backdrop-blur-sm transition-all"
+          title="Call History"
+        >
+          <History className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* Call History Sidebar */}
+      {showHistory && (
+        <div className="absolute top-0 right-0 h-full w-80 bg-slate-900/95 backdrop-blur-md z-40 border-l border-slate-700 overflow-y-auto">
+          <div className="p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold text-lg flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Call History
+              </h3>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* History List */}
+            <div className="space-y-3">
+              {callHistory.length === 0 ? (
+                <p className="text-slate-400 text-sm text-center py-8">
+                  No previous calls
+                </p>
+              ) : (
+                callHistory.map((call) => {
+                  const isOutgoing = call.senderId === authUser._id;
+                  const { callData } = call;
+                  
+                  return (
+                    <div
+                      key={call._id}
+                      className="bg-slate-800/50 rounded-lg p-3 hover:bg-slate-800 transition-colors"
+                    >
+                      {/* Call Type Icon */}
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-full ${
+                          callData.status === "completed" 
+                            ? "bg-green-500/20" 
+                            : callData.status === "missed" || callData.status === "rejected"
+                            ? "bg-red-500/20"
+                            : "bg-yellow-500/20"
+                        }`}>
+                          {callData.callType === "video" ? (
+                            <Video className={`w-4 h-4 ${
+                              callData.status === "completed" 
+                                ? "text-green-400" 
+                                : callData.status === "missed" || callData.status === "rejected"
+                                ? "text-red-400"
+                                : "text-yellow-400"
+                            }`} />
+                          ) : (
+                            <Phone className={`w-4 h-4 ${
+                              callData.status === "completed" 
+                                ? "text-green-400" 
+                                : callData.status === "missed" || callData.status === "rejected"
+                                ? "text-red-400"
+                                : "text-yellow-400"
+                            }`} />
+                          )}
+                        </div>
+
+                        {/* Call Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-white text-sm font-medium">
+                              {callData.callType === "video" ? "Video" : "Voice"}
+                            </span>
+                            <span className="text-slate-400 text-xs">
+                              {isOutgoing ? "↗ Outgoing" : "↙ Incoming"}
+                            </span>
+                          </div>
+                          
+                          <div className="text-slate-400 text-xs">
+                            {callData.status === "completed" && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {formatDuration(callData.duration)}
+                              </span>
+                            )}
+                            {callData.status === "missed" && (
+                              <span className="text-red-400">Missed</span>
+                            )}
+                            {callData.status === "rejected" && (
+                              <span className="text-red-400">Declined</span>
+                            )}
+                            {callData.status === "cancelled" && (
+                              <span className="text-yellow-400">Cancelled</span>
+                            )}
+                          </div>
+
+                          <div className="text-slate-500 text-xs mt-1">
+                            {formatCallTime(call.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Video Call Container */}
       <div 

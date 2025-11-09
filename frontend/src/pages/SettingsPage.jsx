@@ -50,20 +50,20 @@ function SettingsPage() {
   ];
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
+    <div className="h-screen bg-[#ECE5DD] flex flex-col">
       {/* Header */}
-      <div className="bg-slate-800/50 border-b border-slate-700/50 p-4 flex items-center gap-4">
+      <div className="bg-[#F0F2F5] border-b border-gray-200 p-4 flex items-center gap-4">
         <button
           onClick={() => navigate("/")}
-          className="text-slate-400 hover:text-slate-200 transition-colors"
+          className="text-gray-600 hover:text-gray-800 transition-colors"
         >
           <ArrowLeftIcon className="w-6 h-6" />
         </button>
-        <h1 className="text-xl font-semibold text-slate-200">Settings</h1>
+        <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
       </div>
 
       {/* Profile Section */}
-      <div className="bg-slate-800/30 border-b border-slate-700/50 p-6">
+      <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center gap-4">
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -75,7 +75,7 @@ function SettingsPage() {
               className="w-20 h-20 rounded-full object-cover"
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
-              <span className="text-white text-xs">Change</span>
+              <span className="text-white text-xs font-medium">Change</span>
             </div>
           </button>
           <input
@@ -86,42 +86,42 @@ function SettingsPage() {
             className="hidden"
           />
           <div>
-            <h2 className="text-lg font-semibold text-slate-200">
+            <h2 className="text-lg font-semibold text-gray-900">
               {authUser.fullName}
             </h2>
-            <p className="text-sm text-slate-400">{authUser.email}</p>
-            <p className="text-xs text-slate-500 mt-1">@{authUser.email.split('@')[0]}</p>
+            <p className="text-sm text-gray-600">{authUser.email}</p>
+            <p className="text-xs text-gray-500 mt-1">@{authUser.email.split('@')[0]}</p>
           </div>
         </div>
       </div>
 
       {/* Settings List */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin">
+      <div className="flex-1 overflow-y-auto bg-white">
         {settingsItems.map((item, index) => (
           <button
             key={index}
             onClick={item.onClick}
             disabled={item.disabled}
-            className={`w-full flex items-center gap-4 p-4 transition-colors border-b border-slate-700/30 ${
+            className={`w-full flex items-center gap-4 p-4 transition-colors border-b border-gray-200 ${
               item.disabled 
                 ? "opacity-50 cursor-not-allowed" 
-                : "hover:bg-slate-800/50 cursor-pointer"
+                : "hover:bg-[#F5F6F6] cursor-pointer"
             }`}
           >
-            <item.icon className="w-5 h-5 text-slate-400" />
-            <span className="flex-1 text-left text-slate-200 text-sm">
+            <item.icon className="w-5 h-5 text-gray-600" />
+            <span className="flex-1 text-left text-gray-900 text-[15px]">
               {item.label}
             </span>
             {item.value && (
-              <span className="text-sm text-cyan-400">{item.value}</span>
+              <span className="text-sm text-[#25D366]">{item.value}</span>
             )}
             {item.label === "Notifications and Sounds" && (
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-gray-600">
                 {isSoundEnabled ? "On" : "Off"}
               </span>
             )}
             {!item.disabled && !item.value && (
-              <span className="text-slate-500">›</span>
+              <span className="text-gray-400">›</span>
             )}
           </button>
         ))}
@@ -129,10 +129,10 @@ function SettingsPage() {
         {/* Logout Button */}
         <button
           onClick={logout}
-          className="w-full flex items-center gap-4 p-4 hover:bg-slate-800/50 transition-colors border-b border-slate-700/30 text-red-400"
+          className="w-full flex items-center gap-4 p-4 hover:bg-red-50 transition-colors border-b border-gray-200 text-red-600"
         >
           <LogOutIcon className="w-5 h-5" />
-          <span className="flex-1 text-left text-sm">Log Out</span>
+          <span className="flex-1 text-left text-[15px] font-medium">Log Out</span>
         </button>
       </div>
     </div>

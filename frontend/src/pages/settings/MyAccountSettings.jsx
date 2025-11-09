@@ -55,16 +55,16 @@ function MyAccountSettings() {
   };
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
+    <div className="h-screen bg-[#ECE5DD] flex flex-col">
       {/* Header */}
-      <div className="bg-slate-800/50 border-b border-slate-700/50 p-4 flex items-center gap-4">
+      <div className="bg-[#F0F2F5] border-b border-gray-200 p-4 flex items-center gap-4">
         <button
           onClick={() => navigate("/settings")}
-          className="text-slate-400 hover:text-slate-200 transition-colors"
+          className="text-gray-600 hover:text-gray-800 transition-colors"
         >
           <ArrowLeftIcon className="w-6 h-6" />
         </button>
-        <h1 className="text-xl font-semibold text-slate-200">My Account</h1>
+        <h1 className="text-xl font-semibold text-gray-900">My Account</h1>
       </div>
 
       {/* Profile Photo Section */}

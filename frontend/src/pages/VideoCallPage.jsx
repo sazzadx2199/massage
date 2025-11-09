@@ -252,42 +252,55 @@ function VideoCallPage() {
   }
 
   return (
-    <div className="h-screen bg-slate-900 relative">
-      {/* Loading Overlay */}
+    <div className="h-screen bg-[#0B141A] relative">
+      {/* Loading Overlay - WhatsApp Style */}
       {isLoading && (
-        <div className="absolute inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center">
-          <Loader2 className="w-16 h-16 text-cyan-500 animate-spin mb-4" />
-          <p className="text-white text-xl font-medium">Connecting...</p>
-          <p className="text-slate-400 text-sm mt-2">Please wait</p>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#075E54] to-[#128C7E] z-50 flex flex-col items-center justify-center">
+          <div className="mb-6">
+            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+              <Phone className="w-10 h-10 text-white" />
+            </div>
+          </div>
+          <p className="text-white text-2xl font-light mb-2">WhatsApp</p>
+          <p className="text-white/80 text-lg">Connecting...</p>
+          <div className="mt-4 flex gap-2">
+            <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+            <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+            <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+          </div>
         </div>
       )}
 
       {/* Top Bar - WhatsApp Style */}
-      <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/60 to-transparent p-4">
+      <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-[#075E54]/90 to-transparent p-3">
         <div className="flex items-center justify-between">
           {/* Back Button */}
           <button
             onClick={handleLeaveCall}
             className="text-white p-2 hover:bg-white/10 rounded-full transition-all"
-            title="Leave Call"
+            title="End call"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
 
-          {/* Call Type */}
-          <div className="flex items-center gap-2 text-white">
-            {callType === "video" ? (
-              <Video className="w-5 h-5" />
-            ) : (
-              <Phone className="w-5 h-5" />
-            )}
-            <span className="text-sm font-medium">
-              {callType === "video" ? "Video call" : "Voice call"}
-            </span>
+          {/* Call Info */}
+          <div className="flex flex-col items-center">
+            <span className="text-white text-sm font-light">WhatsApp</span>
+            <div className="flex items-center gap-1.5 text-white/80 text-xs">
+              {callType === "video" ? (
+                <Video className="w-3.5 h-3.5" />
+              ) : (
+                <Phone className="w-3.5 h-3.5" />
+              )}
+              <span>{callType === "video" ? "Video" : "Voice"}</span>
+            </div>
           </div>
 
           {/* More Options */}
-          <button className="text-white p-2 hover:bg-white/10 rounded-full transition-all">
+          <button 
+            className="text-white p-2 hover:bg-white/10 rounded-full transition-all"
+            title="More options"
+          >
             <MoreVertical className="w-6 h-6" />
           </button>
         </div>
@@ -409,14 +422,24 @@ function VideoCallPage() {
         </div>
       )}
 
-      {/* Video Call Container */}
+      {/* Video Call Container - WhatsApp Style */}
       <div 
         ref={containerRef} 
         className="w-full h-full"
         style={{ 
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          background: 'linear-gradient(135deg, #0B141A 0%, #1a2a35 100%)'
         }}
       />
+      
+      {/* WhatsApp Branding Overlay */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+        <div className="bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full">
+          <p className="text-white/60 text-xs flex items-center gap-2">
+            <span className="w-2 h-2 bg-[#25D366] rounded-full animate-pulse"></span>
+            End-to-end encrypted
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

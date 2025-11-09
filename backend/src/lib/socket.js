@@ -193,6 +193,17 @@ io.on("connection", (socket) => {
     console.log(`📞 User joined call room: ${roomId}`);
   });
 
+  // Screen sharing events
+  socket.on("screen-share-started", ({ roomId }) => {
+    console.log(`🖥️ Screen share started in room: ${roomId}`);
+    socket.to(roomId).emit("screen-share-started");
+  });
+
+  socket.on("screen-share-stopped", ({ roomId }) => {
+    console.log(`📹 Screen share stopped in room: ${roomId}`);
+    socket.to(roomId).emit("screen-share-stopped");
+  });
+
   // with socket.on we listen for events from clients
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.user.fullName);

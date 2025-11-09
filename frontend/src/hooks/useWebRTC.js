@@ -159,7 +159,12 @@ export const useWebRTC = (roomId, isInitiator) => {
           console.log('🔄 Replacing video track with screen track...');
           await sender.replaceTrack(screenTrack);
           console.log('✅ Screen track replaced in peer connection');
-          console.log('📡 Remote peer will now receive screen share');
+          
+          // Notify remote peer about screen sharing
+          if (socket) {
+            socket.emit('screen-share-started', { roomId });
+            console.log('📡 Notified remote peer about screen share');
+          }
         } else {
           console.error('❌ No video sender found in peer connection');
         }
@@ -210,7 +215,12 @@ export const useWebRTC = (roomId, isInitiator) => {
           console.log('🔄 Restoring camera track...');
           await sender.replaceTrack(originalVideoTrack.current);
           console.log('✅ Camera track restored in peer connection');
-          console.log('📡 Remote peer will now see camera again');
+          
+          // Notify remote peer that screen sharing stopped
+          if (socket) {
+            socket.emit('screen-share-stopped', { roomId });
+            console.log('📡 Notified remote peer that screen share stopped');
+          }
         } else {
           console.error('❌ No video sender found');
         }
@@ -430,11 +440,23 @@ export const useWebRTC = (roomId, isInitiator) => {
       handleIceCandidate(candidate);
     });
 
+    socket.on('screen-share-started', () => {
+      console.log("🖥️ Remote peer started screen sharing");
+      // Remote stream will automatically update via ontrack
+    });
+
+    socket.on('screen-share-stopped', () => {
+      console.log("📹 Remote peer stopped screen sharing");
+      // Remote stream will automatically update via ontrack
+    });
+
     return () => {
       console.log("🧹 Cleaning up WebRTC socket listeners");
       socket.off('call-offer');
       socket.off('call-answer');
       socket.off('ice-candidate');
+      socket.off('screen-share-started');
+      socket.off('screen-share-stopped');
     };
   }, [socket, roomId, handleOffer, handleAnswer, handleIceCandidate]);
 

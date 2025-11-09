@@ -162,6 +162,31 @@ io.on("connection", (socket) => {
     }
   });
 
+  // WebRTC Signaling Events
+  socket.on("call-offer", ({ roomId, offer }) => {
+    console.log(`📞 Call offer received for room: ${roomId}`);
+    // Broadcast offer to room
+    socket.to(roomId).emit("call-offer", { offer });
+  });
+
+  socket.on("call-answer", ({ roomId, answer }) => {
+    console.log(`📞 Call answer received for room: ${roomId}`);
+    // Broadcast answer to room
+    socket.to(roomId).emit("call-answer", { answer });
+  });
+
+  socket.on("ice-candidate", ({ roomId, candidate }) => {
+    console.log(`📞 ICE candidate received for room: ${roomId}`);
+    // Broadcast ICE candidate to room
+    socket.to(roomId).emit("ice-candidate", { candidate });
+  });
+
+  // Join call room
+  socket.on("join-call-room", ({ roomId }) => {
+    socket.join(roomId);
+    console.log(`📞 User joined call room: ${roomId}`);
+  });
+
   // with socket.on we listen for events from clients
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.user.fullName);

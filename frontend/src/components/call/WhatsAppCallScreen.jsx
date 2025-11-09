@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Phone, Mic, MicOff, Video as VideoIcon, VideoOff, Volume2, VolumeX, Minimize2, Maximize2, X } from 'lucide-react';
+import { Phone, Mic, MicOff, Video as VideoIcon, VideoOff, Volume2, VolumeX, Minimize2, Maximize2, X, Monitor, MonitorOff } from 'lucide-react';
 import useWebRTC from '../../hooks/useWebRTC';
 
 function WhatsAppCallScreen({ 
@@ -23,9 +23,12 @@ function WhatsAppCallScreen({
     remoteStream,
     isAudioEnabled,
     isVideoEnabled,
+    isScreenSharing,
     connectionState,
     toggleAudio,
     toggleVideo,
+    startScreenShare,
+    stopScreenShare,
     startCall,
     endCall,
   } = useWebRTC(roomId, isInitiator);
@@ -214,6 +217,21 @@ function WhatsAppCallScreen({
               title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
             >
               {isVideoEnabled ? <VideoIcon className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+            </button>
+          )}
+
+          {/* Screen Share (Video calls only) */}
+          {callType === 'video' && (
+            <button
+              onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+                isScreenSharing
+                  ? 'bg-[#25D366] hover:bg-[#20BD5A] text-white'
+                  : 'bg-white/20 hover:bg-white/30 text-white'
+              }`}
+              title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
+            >
+              {isScreenSharing ? <MonitorOff className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
             </button>
           )}
 

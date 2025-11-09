@@ -7,11 +7,13 @@ export const useWebRTC = (roomId, isInitiator) => {
   const [remoteStream, setRemoteStream] = useState(null);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [connectionState, setConnectionState] = useState('new');
   
   const peerConnection = useRef(null);
   const localStreamRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
+  const originalVideoTrack = useRef(null);
 
   // ICE servers configuration
   const iceServers = {
@@ -120,6 +122,106 @@ export const useWebRTC = (roomId, isInitiator) => {
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoEnabled(videoTrack.enabled);
       }
+    }
+  }, []);
+
+  // Start screen sharing
+  const startScreenShare = useCallback(async () => {
+    try {
+      console.log('🖥️ Starting screen share...');
+      
+      // Get screen stream
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          cursor: 'always',
+          displaySurface: 'monitor',
+        },
+        audio: false,
+      });
+
+      const screenTrack = screenStream.getVideoTracks()[0];
+      
+      // Save original video track
+      if (localStreamRef.current) {
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+        if (videoTrack) {
+          originalVideoTrack.current = videoTrack;
+        }
+      }
+
+      // Replace video track in peer connection
+      if (peerConnection.current) {
+        const sender = peerConnection.current
+          .getSenders()
+          .find(s => s.track?.kind === 'video');
+        
+        if (sender) {
+          await sender.replaceTrack(screenTrack);
+          console.log('✅ Screen track replaced');
+        }
+      }
+
+      // Replace in local stream
+      if (localStreamRef.current) {
+        const oldTrack = localStreamRef.current.getVideoTracks()[0];
+        if (oldTrack) {
+          localStreamRef.current.removeTrack(oldTrack);
+        }
+        localStreamRef.current.addTrack(screenTrack);
+        setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+      }
+
+      setIsScreenSharing(true);
+
+      // Handle screen share stop
+      screenTrack.onended = () => {
+        console.log('🖥️ Screen share ended');
+        stopScreenShare();
+      };
+
+    } catch (error) {
+      console.error('❌ Error starting screen share:', error);
+    }
+  }, []);
+
+  // Stop screen sharing
+  const stopScreenShare = useCallback(async () => {
+    try {
+      console.log('🖥️ Stopping screen share...');
+
+      if (!originalVideoTrack.current) {
+        console.warn('⚠️ No original video track to restore');
+        return;
+      }
+
+      // Replace screen track with camera track
+      if (peerConnection.current) {
+        const sender = peerConnection.current
+          .getSenders()
+          .find(s => s.track?.kind === 'video');
+        
+        if (sender) {
+          await sender.replaceTrack(originalVideoTrack.current);
+          console.log('✅ Camera track restored');
+        }
+      }
+
+      // Replace in local stream
+      if (localStreamRef.current) {
+        const screenTrack = localStreamRef.current.getVideoTracks()[0];
+        if (screenTrack) {
+          screenTrack.stop();
+          localStreamRef.current.removeTrack(screenTrack);
+        }
+        localStreamRef.current.addTrack(originalVideoTrack.current);
+        setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+      }
+
+      setIsScreenSharing(false);
+      originalVideoTrack.current = null;
+
+    } catch (error) {
+      console.error('❌ Error stopping screen share:', error);
     }
   }, []);
 
@@ -332,9 +434,12 @@ export const useWebRTC = (roomId, isInitiator) => {
     remoteStream,
     isAudioEnabled,
     isVideoEnabled,
+    isScreenSharing,
     connectionState,
     toggleAudio,
     toggleVideo,
+    startScreenShare,
+    stopScreenShare,
     startCall,
     answerCall,
     endCall,

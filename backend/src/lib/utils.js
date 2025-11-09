@@ -21,6 +21,7 @@ export const generateToken = (userId, res) => {
     secure: isProduction, // HTTPS required when sameSite is "none"
   });
 
+  // Also return token in response for mobile browsers that block cookies
   return token;
 };
 

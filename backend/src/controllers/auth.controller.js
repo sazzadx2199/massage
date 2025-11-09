@@ -44,13 +44,14 @@ export const signup = async (req, res) => {
       // after CR:
       // Persist user first, then issue auth cookie
       const savedUser = await newUser.save();
-      generateToken(savedUser._id, res);
+      const token = generateToken(savedUser._id, res);
 
       res.status(201).json({
         _id: newUser._id,
         fullName: newUser.fullName,
         email: newUser.email,
         profilePic: newUser.profilePic,
+        token, // Include token for mobile browsers
       });
 
       // Email feature disabled - no Resend account
@@ -83,13 +84,14 @@ export const login = async (req, res) => {
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
 
-    generateToken(user._id, res);
+    const token = generateToken(user._id, res);
 
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
+      token, // Include token for mobile browsers
     });
   } catch (error) {
     console.error("Error in login controller:", error);

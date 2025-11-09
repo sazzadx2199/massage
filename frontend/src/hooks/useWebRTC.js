@@ -16,16 +16,18 @@ export const useWebRTC = (roomId, isInitiator) => {
   const originalVideoTrack = useRef(null);
   const connectionTimeout = useRef(null);
 
-  // ICE servers configuration - Multiple STUN servers + Free TURN server
+  // ICE servers configuration - Multiple STUN servers + Multiple TURN servers
   const iceServers = {
     iceServers: [
+      // STUN servers for same network
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
       { urls: 'stun:stun.services.mozilla.com' },
-      // Free TURN server for NAT traversal
+      
+      // Free TURN servers for different networks (try multiple)
       {
         urls: 'turn:openrelay.metered.ca:80',
         username: 'openrelayproject',
@@ -36,6 +38,23 @@ export const useWebRTC = (roomId, isInitiator) => {
         username: 'openrelayproject',
         credential: 'openrelayproject',
       },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      
+      // TODO: For production, replace with paid TURN server:
+      // Twilio: https://www.twilio.com/stun-turn ($0.0004/min)
+      // Xirsys: https://xirsys.com (50GB free/month)
+      // Metered: https://www.metered.ca/tools/openrelay/ (50GB free/month)
+      //
+      // Example:
+      // {
+      //   urls: 'turn:global.turn.twilio.com:3478?transport=tcp',
+      //   username: 'your-twilio-username',
+      //   credential: 'your-twilio-credential',
+      // },
     ],
     iceCandidatePoolSize: 10,
   };

@@ -175,18 +175,60 @@ export const useWebRTC = (roomId, isInitiator) => {
     setConnectionState('closed');
   }, []);
 
+  // Handle incoming offer
+  const handleOffer = useCallback(async (offer) => {
+    try {
+      console.log("📞 Handling incoming offer");
+      const stream = await initializeMedia(true);
+      const pc = createPeerConnection();
+
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      if (socket) {
+        socket.emit('call-answer', {
+          roomId,
+          answer: pc.localDescription,
+        });
+      }
+    } catch (error) {
+      console.error('Error handling offer:', error);
+    }
+  }, [roomId, socket, initializeMedia, createPeerConnection]);
+
   // Socket event listeners
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('call-answer', handleAnswer);
-    socket.on('ice-candidate', ({ candidate }) => handleIceCandidate(candidate));
+    console.log("✅ Setting up WebRTC socket listeners for room:", roomId);
+
+    socket.on('call-offer', ({ offer }) => {
+      console.log("📞 Received call offer");
+      handleOffer(offer);
+    });
+
+    socket.on('call-answer', ({ answer }) => {
+      console.log("📞 Received call answer");
+      handleAnswer(answer);
+    });
+
+    socket.on('ice-candidate', ({ candidate }) => {
+      console.log("📞 Received ICE candidate");
+      handleIceCandidate(candidate);
+    });
 
     return () => {
-      socket.off('call-answer', handleAnswer);
+      console.log("🧹 Cleaning up WebRTC socket listeners");
+      socket.off('call-offer');
+      socket.off('call-answer');
       socket.off('ice-candidate');
     };
-  }, [socket, handleAnswer, handleIceCandidate]);
+  }, [socket, roomId, handleOffer, handleAnswer, handleIceCandidate]);
 
   // Cleanup on unmount
   useEffect(() => {

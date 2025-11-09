@@ -26,18 +26,21 @@ function WhatsAppCallScreen({
     toggleAudio,
     toggleVideo,
     startCall,
-    answerCall,
     endCall,
   } = useWebRTC(roomId, isInitiator);
 
   // Initialize call
   useEffect(() => {
+    console.log("🎬 Initializing call:", { isInitiator, callType, roomId });
+    
     if (isInitiator) {
+      console.log("📞 Starting call as initiator");
       startCall(callType === 'video');
-    } else if (offer) {
-      answerCall(offer, callType === 'video');
+    } else {
+      console.log("📞 Waiting for offer as receiver");
+      // Receiver will automatically handle offer via socket events in useWebRTC
     }
-  }, [isInitiator, callType, offer, startCall, answerCall]);
+  }, [isInitiator, callType, roomId, startCall]);
 
   // Setup video elements
   useEffect(() => {

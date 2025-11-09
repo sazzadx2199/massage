@@ -125,8 +125,8 @@ function App() {
           callType={activeCall.callType}
           roomId={activeCall.roomId}
           isInitiator={!callOffer}
-          offer={callOffer}
           onEnd={() => {
+            console.log("📴 Ending call");
             socket.emit("endCall", { 
               receiverId: activeCall.user._id, 
               roomId: activeCall.roomId 
@@ -135,6 +135,7 @@ function App() {
             setCallOffer(null);
           }}
           onMinimize={() => {
+            console.log("📦 Minimizing call");
             // Keep call active but minimized
           }}
         />

@@ -16,7 +16,7 @@ export const useWebRTC = (roomId, isInitiator) => {
   const originalVideoTrack = useRef(null);
   const connectionTimeout = useRef(null);
 
-  // ICE servers configuration - Multiple STUN servers for better connectivity
+  // ICE servers configuration - Multiple STUN servers + Free TURN server
   const iceServers = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
@@ -25,6 +25,17 @@ export const useWebRTC = (roomId, isInitiator) => {
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
       { urls: 'stun:stun.services.mozilla.com' },
+      // Free TURN server for NAT traversal
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
     ],
     iceCandidatePoolSize: 10,
   };

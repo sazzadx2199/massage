@@ -44,19 +44,28 @@ export const useWebRTC = (roomId, isInitiator) => {
 
     pc.onicecandidate = (event) => {
       if (event.candidate && socket) {
+        console.log('📤 Sending ICE candidate');
         socket.emit('ice-candidate', {
           roomId,
           candidate: event.candidate,
         });
+      } else if (!event.candidate) {
+        console.log('✅ ICE gathering complete');
       }
     };
 
     pc.ontrack = (event) => {
+      console.log('📹 Remote track received:', event.streams[0]);
       setRemoteStream(event.streams[0]);
     };
 
     pc.onconnectionstatechange = () => {
+      console.log('🔄 Connection state changed:', pc.connectionState);
       setConnectionState(pc.connectionState);
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('🧊 ICE connection state:', pc.iceConnectionState);
     };
 
     peerConnection.current = pc;
@@ -88,24 +97,32 @@ export const useWebRTC = (roomId, isInitiator) => {
   // Start call (initiator)
   const startCall = useCallback(async (videoEnabled = true) => {
     try {
+      console.log('🎬 Starting call as initiator, video:', videoEnabled);
       const stream = await initializeMedia(videoEnabled);
+      console.log('✅ Local media initialized');
+      
       const pc = createPeerConnection();
+      console.log('✅ Peer connection created');
 
       stream.getTracks().forEach((track) => {
+        console.log('➕ Adding track:', track.kind);
         pc.addTrack(track, stream);
       });
 
+      console.log('📝 Creating offer...');
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      console.log('✅ Local description set');
 
       if (socket) {
+        console.log('📤 Sending offer to room:', roomId);
         socket.emit('call-offer', {
           roomId,
           offer: pc.localDescription,
         });
       }
     } catch (error) {
-      console.error('Error starting call:', error);
+      console.error('❌ Error starting call:', error);
       throw error;
     }
   }, [roomId, socket, initializeMedia, createPeerConnection]);
@@ -139,13 +156,18 @@ export const useWebRTC = (roomId, isInitiator) => {
   // Handle incoming answer
   const handleAnswer = useCallback(async (answer) => {
     try {
+      console.log('📞 Handling answer:', answer);
       if (peerConnection.current) {
+        console.log('📝 Setting remote description from answer...');
         await peerConnection.current.setRemoteDescription(
           new RTCSessionDescription(answer)
         );
+        console.log('✅ Remote description set from answer');
+      } else {
+        console.error('❌ No peer connection available');
       }
     } catch (error) {
-      console.error('Error handling answer:', error);
+      console.error('❌ Error handling answer:', error);
     }
   }, []);
 
@@ -153,12 +175,16 @@ export const useWebRTC = (roomId, isInitiator) => {
   const handleIceCandidate = useCallback(async (candidate) => {
     try {
       if (peerConnection.current) {
+        console.log('🧊 Adding ICE candidate');
         await peerConnection.current.addIceCandidate(
           new RTCIceCandidate(candidate)
         );
+        console.log('✅ ICE candidate added');
+      } else {
+        console.warn('⚠️ Peer connection not ready for ICE candidate');
       }
     } catch (error) {
-      console.error('Error handling ICE candidate:', error);
+      console.error('❌ Error handling ICE candidate:', error);
     }
   }, []);
 
@@ -178,26 +204,38 @@ export const useWebRTC = (roomId, isInitiator) => {
   // Handle incoming offer
   const handleOffer = useCallback(async (offer) => {
     try {
-      console.log("📞 Handling incoming offer");
+      console.log("📞 Handling incoming offer:", offer);
+      
+      console.log('🎤 Initializing local media...');
       const stream = await initializeMedia(true);
+      console.log('✅ Local media initialized');
+      
+      console.log('🔗 Creating peer connection...');
       const pc = createPeerConnection();
 
       stream.getTracks().forEach((track) => {
+        console.log('➕ Adding track:', track.kind);
         pc.addTrack(track, stream);
       });
 
+      console.log('📝 Setting remote description...');
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      console.log('✅ Remote description set');
+      
+      console.log('📝 Creating answer...');
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      console.log('✅ Local description set');
 
       if (socket) {
+        console.log('📤 Sending answer to room:', roomId);
         socket.emit('call-answer', {
           roomId,
           answer: pc.localDescription,
         });
       }
     } catch (error) {
-      console.error('Error handling offer:', error);
+      console.error('❌ Error handling offer:', error);
     }
   }, [roomId, socket, initializeMedia, createPeerConnection]);
 

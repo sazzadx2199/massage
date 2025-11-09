@@ -14,13 +14,19 @@ export const useWebRTC = (roomId, isInitiator) => {
   const localStreamRef = useRef(null);
   const iceCandidatesQueue = useRef([]);
   const originalVideoTrack = useRef(null);
+  const connectionTimeout = useRef(null);
 
-  // ICE servers configuration
+  // ICE servers configuration - Multiple STUN servers for better connectivity
   const iceServers = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:stun.services.mozilla.com' },
     ],
+    iceCandidatePoolSize: 10,
   };
 
   // Initialize media stream
@@ -93,10 +99,37 @@ export const useWebRTC = (roomId, isInitiator) => {
     pc.onconnectionstatechange = () => {
       console.log('🔄 Connection state changed:', pc.connectionState);
       setConnectionState(pc.connectionState);
+      
+      // Clear timeout if connected
+      if (pc.connectionState === 'connected') {
+        if (connectionTimeout.current) {
+          clearTimeout(connectionTimeout.current);
+          connectionTimeout.current = null;
+        }
+      }
+      
+      // Handle failed connection
+      if (pc.connectionState === 'failed') {
+        console.error('❌ Peer connection failed');
+        if (connectionTimeout.current) {
+          clearTimeout(connectionTimeout.current);
+        }
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
       console.log('🧊 ICE connection state:', pc.iceConnectionState);
+      
+      // Handle connection failures
+      if (pc.iceConnectionState === 'failed') {
+        console.error('❌ ICE connection failed - trying to restart');
+        // Try to restart ICE
+        pc.restartIce();
+      } else if (pc.iceConnectionState === 'disconnected') {
+        console.warn('⚠️ ICE connection disconnected');
+      } else if (pc.iceConnectionState === 'connected') {
+        console.log('✅ ICE connection established successfully!');
+      }
     };
 
     peerConnection.current = pc;
@@ -273,6 +306,14 @@ export const useWebRTC = (roomId, isInitiator) => {
           roomId,
           offer: pc.localDescription,
         });
+        
+        // Set connection timeout (30 seconds)
+        connectionTimeout.current = setTimeout(() => {
+          if (peerConnection.current?.connectionState !== 'connected') {
+            console.error('⏱️ Connection timeout - call did not connect within 30 seconds');
+            console.log('💡 Tip: Check your network connection or firewall settings');
+          }
+        }, 30000);
       }
     } catch (error) {
       console.error('❌ Error starting call:', error);

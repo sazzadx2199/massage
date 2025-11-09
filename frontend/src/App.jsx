@@ -10,16 +10,18 @@ import PrivacySettings from "./pages/settings/PrivacySettings";
 import ChatSettings from "./pages/settings/ChatSettings";
 import { useAuthStore } from "./store/useAuthStore";
 import { useCallStore } from "./store/useCallStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import PageLoader from "./components/PageLoader";
 import IncomingCallModal from "./components/IncomingCallModal";
+import WhatsAppCallScreen from "./components/call/WhatsAppCallScreen";
 import InstallPWA from "./components/InstallPWA";
 
 import { Toaster } from "react-hot-toast";
 
 function App() {
   const { checkAuth, isCheckingAuth, authUser, socket } = useAuthStore();
-  const { incomingCall, setIncomingCall, rejectCall, setCallStartTime } = useCallStore();
+  const { incomingCall, activeCall, setIncomingCall, rejectCall, setCallStartTime, startCall, endCall } = useCallStore();
+  const [callOffer, setCallOffer] = useState(null);
 
   useEffect(() => {
     checkAuth();
@@ -27,32 +29,43 @@ function App() {
 
   // Listen for incoming calls
   useEffect(() => {
-    if (!socket || !authUser) return;
+    if (!socket || !authUser) {
+      console.log("⚠️ Socket or authUser not ready:", { socket: !!socket, authUser: !!authUser });
+      return;
+    }
+
+    console.log("✅ Setting up call listeners for:", authUser.fullName);
 
     socket.on("incomingCall", (callData) => {
-      console.log("Incoming call:", callData);
+      console.log("📞 Incoming call received:", callData);
       setIncomingCall(callData);
     });
 
     socket.on("callRejected", () => {
-      console.log("Call rejected by other user");
-      // If on call page, navigate back
-      if (window.location.pathname === "/video-call") {
-        window.location.href = "/";
-      }
+      console.log("❌ Call rejected by other user");
+      endCall();
+      setCallOffer(null);
     });
 
     socket.on("callAccepted", () => {
-      console.log("Call accepted by other user");
+      console.log("✅ Call accepted by other user");
       setCallStartTime();
     });
 
+    socket.on("callEnded", () => {
+      console.log("📴 Call ended by other user");
+      endCall();
+      setCallOffer(null);
+    });
+
     return () => {
+      console.log("🧹 Cleaning up call listeners");
       socket.off("incomingCall");
       socket.off("callRejected");
       socket.off("callAccepted");
+      socket.off("callEnded");
     };
-  }, [socket, authUser, setIncomingCall]);
+  }, [socket, authUser, setIncomingCall, endCall, setCallStartTime]);
 
   if (isCheckingAuth) return <PageLoader />;
 
@@ -76,7 +89,8 @@ function App() {
       </Routes>
 
       {/* Incoming Call Modal */}
-      {incomingCall && (
+      {/* Incoming Call Modal */}
+      {incomingCall && !activeCall && (
         <IncomingCallModal
           caller={incomingCall.caller}
           callType={incomingCall.callType}
@@ -85,11 +99,12 @@ function App() {
               callerId: incomingCall.caller._id,
               roomId: incomingCall.roomId,
             });
+            socket.emit("join-call-room", { roomId: incomingCall.roomId });
             
-            // Navigate to video call page
-            window.location.href = `/video-call?roomId=${incomingCall.roomId}&type=${incomingCall.callType}&receiverId=${incomingCall.caller._id}`;
-            
-            rejectCall(); // Clear incoming call state
+            // Start call with custom UI
+            startCall(incomingCall.caller, incomingCall.callType, incomingCall.roomId);
+            setCallOffer(incomingCall.offer);
+            rejectCall();
           }}
           onReject={() => {
             socket.emit("callRejected", {
@@ -99,6 +114,28 @@ function App() {
               roomId: incomingCall.roomId,
             });
             rejectCall();
+          }}
+        />
+      )}
+
+      {/* Active Call Screen */}
+      {activeCall && (
+        <WhatsAppCallScreen
+          contact={activeCall.user}
+          callType={activeCall.callType}
+          roomId={activeCall.roomId}
+          isInitiator={!callOffer}
+          offer={callOffer}
+          onEnd={() => {
+            socket.emit("endCall", { 
+              receiverId: activeCall.user._id, 
+              roomId: activeCall.roomId 
+            });
+            endCall();
+            setCallOffer(null);
+          }}
+          onMinimize={() => {
+            // Keep call active but minimized
           }}
         />
       )}

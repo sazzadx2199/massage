@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
+import { useCallStore } from "../store/useCallStore";
 import { useNavigate } from "react-router";
 import WhatsAppChatHeader from "./whatsapp/WhatsAppChatHeader";
 import WhatsAppMessageInput from "./whatsapp/WhatsAppMessageInput";
@@ -162,8 +163,13 @@ function ChatContainer() {
     }
   };
 
+  const { startCall } = useCallStore();
+
   const handleVideoCall = () => {
-    const roomId = `${authUser._id}-${selectedUser._id}`;
+    const roomId = `${authUser._id}-${selectedUser._id}-${Date.now()}`;
+    
+    console.log("🎥 Starting video call with:", selectedUser.fullName);
+    
     socket.emit("callUser", {
       receiverId: selectedUser._id,
       callType: "video",
@@ -174,11 +180,16 @@ function ChatContainer() {
         profilePic: authUser.profilePic,
       },
     });
-    navigate(`/video-call?roomId=${roomId}&type=video&receiverId=${selectedUser._id}`);
+    
+    socket.emit("join-call-room", { roomId });
+    startCall(selectedUser, "video", roomId);
   };
 
   const handleVoiceCall = () => {
-    const roomId = `${authUser._id}-${selectedUser._id}`;
+    const roomId = `${authUser._id}-${selectedUser._id}-${Date.now()}`;
+    
+    console.log("📞 Starting audio call with:", selectedUser.fullName);
+    
     socket.emit("callUser", {
       receiverId: selectedUser._id,
       callType: "audio",
@@ -189,7 +200,9 @@ function ChatContainer() {
         profilePic: authUser.profilePic,
       },
     });
-    navigate(`/video-call?roomId=${roomId}&type=audio&receiverId=${selectedUser._id}`);
+    
+    socket.emit("join-call-room", { roomId });
+    startCall(selectedUser, "audio", roomId);
   };
 
   return (

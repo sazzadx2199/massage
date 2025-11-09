@@ -1,11 +1,11 @@
 {
-  "name": "Chatify - Real-time Chat App",
-  "short_name": "Chatify",
-  "description": "Real-time chat application with video/audio calls",
+  "name": "WhatsApp",
+  "short_name": "WhatsApp",
+  "description": "Simple. Reliable. Private messaging and calling for free, available all over the world.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#06b6d4",
+  "background_color": "#ECE5DD",
+  "theme_color": "#25D366",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -19,6 +19,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "categories": ["social", "communication"],
@@ -42,6 +48,13 @@
       "short_name": "Chat",
       "description": "Start a new conversation",
       "url": "/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Open settings",
+      "url": "/settings",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]

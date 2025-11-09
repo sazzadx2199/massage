@@ -30,6 +30,26 @@ const userSchema = new mongoose.Schema(
       maxlength: 70,
       default: "",
     },
+    // Muted chats
+    mutedChats: [{
+      chatId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      mutedUntil: {
+        type: Date,
+      },
+      muteDuration: {
+        type: String,
+        enum: ["8h", "1w", "always"],
+        default: "always",
+      },
+    }],
+    // Archived chats
+    archivedChats: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
   },
   { timestamps: true } // createdAt & updatedAt
 );

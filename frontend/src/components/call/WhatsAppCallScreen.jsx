@@ -16,6 +16,7 @@ function WhatsAppCallScreen({
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
 
   const {
     localStream,
@@ -54,6 +55,16 @@ function WhatsAppCallScreen({
       remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream]);
+
+  // Setup remote audio for audio calls
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteStream) {
+      console.log('🔊 Setting up remote audio stream');
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current.volume = isSpeakerOn ? 1.0 : 0.5;
+      remoteAudioRef.current.play().catch(e => console.error('Audio play error:', e));
+    }
+  }, [remoteStream, isSpeakerOn]);
 
   // Call duration timer
   useEffect(() => {
@@ -246,6 +257,16 @@ function WhatsAppCallScreen({
             {connectionState === 'connecting' ? 'Connecting...' : 'Waiting...'}
           </p>
         </div>
+      )}
+
+      {/* Hidden audio element for audio calls */}
+      {callType === 'audio' && (
+        <audio
+          ref={remoteAudioRef}
+          autoPlay
+          playsInline
+          className="hidden"
+        />
       )}
     </div>
   );

@@ -20,8 +20,7 @@ import { Toaster } from "react-hot-toast";
 
 function App() {
   const { checkAuth, isCheckingAuth, authUser, socket } = useAuthStore();
-  const { incomingCall, activeCall, setIncomingCall, rejectCall, setCallStartTime, startCall, endCall } = useCallStore();
-  const [callOffer, setCallOffer] = useState(null);
+  const { incomingCall, activeCall, setIncomingCall, setCallStartTime, startCall, endCall } = useCallStore();
 
   useEffect(() => {
     checkAuth();
@@ -44,7 +43,6 @@ function App() {
     socket.on("callRejected", () => {
       console.log("❌ Call rejected by other user");
       endCall();
-      setCallOffer(null);
     });
 
     socket.on("callAccepted", () => {
@@ -55,7 +53,6 @@ function App() {
     socket.on("callEnded", () => {
       console.log("📴 Call ended by other user");
       endCall();
-      setCallOffer(null);
     });
 
     return () => {
@@ -89,31 +86,37 @@ function App() {
       </Routes>
 
       {/* Incoming Call Modal */}
-      {/* Incoming Call Modal */}
       {incomingCall && !activeCall && (
         <IncomingCallModal
           caller={incomingCall.caller}
           callType={incomingCall.callType}
           onAccept={() => {
+            console.log("✅ Accepting call from:", incomingCall.caller.fullName);
+            
             socket.emit("callAccepted", {
               callerId: incomingCall.caller._id,
               roomId: incomingCall.roomId,
             });
             socket.emit("join-call-room", { roomId: incomingCall.roomId });
             
-            // Start call with custom UI
+            // Start call with custom UI (receiver is NOT initiator)
             startCall(incomingCall.caller, incomingCall.callType, incomingCall.roomId);
-            setCallOffer(incomingCall.offer);
-            rejectCall();
+            
+            // Clear incoming call modal
+            setIncomingCall(null);
           }}
           onReject={() => {
+            console.log("❌ Rejecting call from:", incomingCall.caller.fullName);
+            
             socket.emit("callRejected", {
               callerId: incomingCall.caller._id,
               receiverId: authUser._id,
               callType: incomingCall.callType,
               roomId: incomingCall.roomId,
             });
-            rejectCall();
+            
+            // Clear incoming call modal
+            setIncomingCall(null);
           }}
         />
       )}
@@ -124,7 +127,7 @@ function App() {
           contact={activeCall.user}
           callType={activeCall.callType}
           roomId={activeCall.roomId}
-          isInitiator={!callOffer}
+          isInitiator={activeCall.startTime === null}
           onEnd={() => {
             console.log("📴 Ending call");
             socket.emit("endCall", { 
@@ -132,7 +135,6 @@ function App() {
               roomId: activeCall.roomId 
             });
             endCall();
-            setCallOffer(null);
           }}
           onMinimize={() => {
             console.log("📦 Minimizing call");

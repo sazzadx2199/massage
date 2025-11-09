@@ -91,7 +91,11 @@ io.on("connection", (socket) => {
 
   // Video/Audio Call Events
   socket.on("callUser", ({ receiverId, callType, roomId, caller }) => {
+    console.log(`📞 Call initiated: ${caller.fullName} → ${receiverId} (${callType})`);
+    
     const receiverSocketId = getReceiverSocketId(receiverId);
+    console.log(`🔍 Receiver socket ID:`, receiverSocketId);
+    
     if (receiverSocketId) {
       // Store call info
       activeCalls[roomId] = {
@@ -101,12 +105,14 @@ io.on("connection", (socket) => {
         startTime: null, // Will be set when accepted
       };
 
+      console.log(`📤 Sending incomingCall to receiver`);
       io.to(receiverSocketId).emit("incomingCall", {
         caller,
         callType,
         roomId,
       });
     } else {
+      console.log(`⚠️ Receiver offline, saving as missed call`);
       // Receiver is offline - save as missed call
       saveCallHistory(caller._id, receiverId, callType, 0, "missed");
     }

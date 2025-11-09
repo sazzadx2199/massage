@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import WhatsAppSidebarHeader from "../components/whatsapp/WhatsAppSidebarHeader";
@@ -12,6 +12,11 @@ function ChatPage() {
   const { activeTab, setActiveTab, selectedUser, setSelectedUser, chats, getMyChatPartners } = useChatStore();
   const { authUser, logout, onlineUsers } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Load chats on mount
+  useEffect(() => {
+    getMyChatPartners();
+  }, [getMyChatPartners]);
 
   // Filter chats based on search
   const filteredChats = chats.filter(chat => 

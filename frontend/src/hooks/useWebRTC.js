@@ -357,8 +357,12 @@ export const useWebRTC = (roomId, isInitiator) => {
     try {
       console.log("📞 Handling incoming offer:", offer);
       
+      // Detect if offer has video track
+      const hasVideo = offer.sdp.includes('m=video');
+      console.log('📹 Offer has video:', hasVideo);
+      
       console.log('🎤 Initializing local media...');
-      const stream = await initializeMedia(true);
+      const stream = await initializeMedia(hasVideo);
       console.log('✅ Local media initialized');
       
       console.log('🔗 Creating peer connection...');

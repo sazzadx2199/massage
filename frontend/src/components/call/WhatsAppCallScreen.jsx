@@ -61,13 +61,31 @@ function WhatsAppCallScreen({
 
   // Setup remote audio for audio calls
   useEffect(() => {
-    if (remoteAudioRef.current && remoteStream) {
-      console.log('🔊 Setting up remote audio stream');
+    if (callType === 'audio' && remoteAudioRef.current && remoteStream) {
+      console.log('🔊 Setting up remote audio stream for audio call');
+      console.log('🔊 Audio element:', remoteAudioRef.current);
+      console.log('🔊 Remote stream tracks:', remoteStream.getTracks());
+      
       remoteAudioRef.current.srcObject = remoteStream;
       remoteAudioRef.current.volume = isSpeakerOn ? 1.0 : 0.5;
-      remoteAudioRef.current.play().catch(e => console.error('Audio play error:', e));
+      
+      // Force play with user interaction
+      const playPromise = remoteAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('✅ Audio playing successfully');
+          })
+          .catch(e => {
+            console.error('❌ Audio play error:', e);
+            // Try again after a short delay
+            setTimeout(() => {
+              remoteAudioRef.current?.play().catch(err => console.error('Retry failed:', err));
+            }, 500);
+          });
+      }
     }
-  }, [remoteStream, isSpeakerOn]);
+  }, [remoteStream, isSpeakerOn, callType]);
 
   // Call duration timer
   useEffect(() => {
@@ -277,15 +295,13 @@ function WhatsAppCallScreen({
         </div>
       )}
 
-      {/* Hidden audio element for audio calls */}
-      {callType === 'audio' && (
-        <audio
-          ref={remoteAudioRef}
-          autoPlay
-          playsInline
-          className="hidden"
-        />
-      )}
+      {/* Hidden audio element for audio calls - always render to avoid timing issues */}
+      <audio
+        ref={remoteAudioRef}
+        autoPlay
+        playsInline
+        className="hidden"
+      />
     </div>
   );
 }

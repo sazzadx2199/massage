@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
-import { ArrowLeft, Loader2, Phone, Video, Clock, History } from "lucide-react";
+import { ArrowLeft, Loader2, Phone, Video, Clock, History, MoreVertical } from "lucide-react";
 
 function VideoCallPage() {
   const [searchParams] = useSearchParams();
@@ -262,20 +262,35 @@ function VideoCallPage() {
         </div>
       )}
 
-      {/* Back Button */}
-      <button
-        onClick={handleLeaveCall}
-        className="absolute top-4 left-4 z-40 bg-slate-800/80 hover:bg-slate-700 text-white p-3 rounded-full backdrop-blur-sm transition-all"
-        title="Leave Call"
-      >
-        <ArrowLeft className="w-6 h-6" />
-      </button>
+      {/* Top Bar - WhatsApp Style */}
+      <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/60 to-transparent p-4">
+        <div className="flex items-center justify-between">
+          {/* Back Button */}
+          <button
+            onClick={handleLeaveCall}
+            className="text-white p-2 hover:bg-white/10 rounded-full transition-all"
+            title="Leave Call"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
 
-      {/* Call Type Indicator */}
-      <div className="absolute top-4 right-4 z-40 bg-slate-800/80 backdrop-blur-sm px-4 py-2 rounded-full">
-        <span className="text-white text-sm font-medium">
-          {callType === "video" ? "📹 Video Call" : "📞 Audio Call"}
-        </span>
+          {/* Call Type */}
+          <div className="flex items-center gap-2 text-white">
+            {callType === "video" ? (
+              <Video className="w-5 h-5" />
+            ) : (
+              <Phone className="w-5 h-5" />
+            )}
+            <span className="text-sm font-medium">
+              {callType === "video" ? "Video call" : "Voice call"}
+            </span>
+          </div>
+
+          {/* More Options */}
+          <button className="text-white p-2 hover:bg-white/10 rounded-full transition-all">
+            <MoreVertical className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* Call History Button */}
